@@ -96,6 +96,13 @@ Once the database healthcheck passes and the containers are live, access the pla
 * ⚙️ **API Control Plane (Django):** http://localhost:8000/api/environments/
 * 🔀 **FinOps Orchestrator (n8n):** http://localhost:5678
 
+### 5. Import the Automation Pipelines
+Because n8n data is isolated locally, you need to import the orchestration workflows on your first run:
+1. Open n8n at [http://localhost:5678](http://localhost:5678)
+2. Click **Add Workflow**, open the top-right menu, and select **Import from File**.
+3. Select `velzion-deploy-pipeline.json` from the `/workflows` directory. Save and **Publish** it.
+4. Repeat the process to import `velzion-destroy-pipeline.json`. Save and **Publish** it.
+
 ---
 
 ## 💻 Usage
