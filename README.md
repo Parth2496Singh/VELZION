@@ -27,7 +27,7 @@
 
 ---
 
-Velzion is a Zero-CI control plane that dynamically provisions isolated, ephemeral preview environments for pull requests. Built on Terraform and Paketo Buildpacks, it automatically negotiates AWS Spot compute and compiles OCI-compliant containers directly from source code. 
+**Velzion** is a Zero-CI control plane that dynamically provisions isolated, ephemeral preview environments for pull requests. Built on Terraform and Paketo Buildpacks, it automatically negotiates AWS Spot compute and compiles OCI-compliant containers directly from source code. 
 
 > **Latest Upgrade:** Velzion now features a multi-page React SPA architecture, including an interactive FinOps ROI Calculator that proves the financial impact of eliminating 24/7 "zombie" staging servers.
 
@@ -44,7 +44,7 @@ Velzion is a Zero-CI control plane that dynamically provisions isolated, ephemer
 
 ## 🚀 Architecture & Stack
 
-Velzion MVP is a fully containerized microservice platform:
+**Velzion MVP** is a fully containerized microservice platform:
 
 | Layer | Technology Stack | Purpose |
 | :--- | :--- | :--- |
