@@ -1,0 +1,151 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zegion-pr",
+        "options": {}
+      },
+      "id": "96ca9293-663e-4d3a-bd42-18b2c0b55965",
+      "name": "1. GitHub Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "zegion-local-hook"
+    },
+    {
+      "parameters": {
+        "command": "=# We simulate the CNCF Buildpack Spot Instance phase here.\n# We will spin up a lightweight Nginx container on a random port to prove isolation.\n\nCONTAINER_PORT=$(shuf -i 8000-9000 -n 1)\ndocker run -d -p $CONTAINER_PORT:80 nginx:alpine > /dev/null\n\n# Output the live URL for the next node\necho \"http://localhost:$CONTAINER_PORT\""
+      },
+      "id": "acf3d9df-1cde-45de-a3af-204c35253ea8",
+      "name": "2. Deploy PR (Docker)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        272,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/api/webhooks/github/",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "=PR Deployed Successfully at {{$json.stdout}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ffec29d1-4668-4388-9f62-43d3e43a1904",
+      "name": "3. Notify Django State Machine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        512,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "command": "=# 1. Define a unique path for this specific PR\nPR_DIR=\"/home/node/terraform/workspace_pr_{{ $json.body.pr_number }}\"\n\n# 2. Dynamically create the isolated directory\nmkdir -p $PR_DIR\n\n# 3. Copy the master configuration template into the workspace\ncp /home/node/terraform/main.tf $PR_DIR/main.tf\n\n# 4. Move inside the workspace\ncd $PR_DIR\n\n# 5. Run the infrastructure pipeline silently (hide stdout, keep stderr)\nterraform init > /dev/null\nterraform apply -var=\"repo_url={{ $json.body.repo_url }}\" -var=\"pr_number={{ $json.body.pr_number }}\" -auto-approve > /dev/null\n\n# 6. Output ONLY the pure JSON coordinates to n8n\nterraform output -json"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        144,
+        48
+      ],
+      "id": "b177ab6a-4cad-4ea8-8c5e-54ea27c6d434",
+      "name": "Execute Command"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/webhooks/github/",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "RUNNING"
+            },
+            {
+              "name": "repo_url",
+              "value": "={{ $('1. GitHub Webhook').item.json.body.repo_url }}"
+            },
+            {
+              "name": "pr_number",
+              "value": "={{ $('1. GitHub Webhook').item.json.body.pr_number }}"
+            },
+            {
+              "name": "dns_prefix",
+              "value": "=http://{{ JSON.parse($json.stdout).public_ip.value }}"
+            },
+            {
+              "name": "instance_id",
+              "value": "={{ JSON.parse($json.stdout).instance_id.value }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        336,
+        144
+      ],
+      "id": "b0038c80-9369-4460-96c0-8043f1772c5e",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "1. GitHub Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Command": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "be3d0172-b169-46f1-93ef-05e0fc2d4ac9",
+  "meta": {
+    "instanceId": "ad2413dcb805409b4662334fd2167f9a2a7e51e613df9fdcacb86f412f03c8da"
+  },
+  "id": "Tv26SGQg2cUms80b",
+  "tags": []
+}
