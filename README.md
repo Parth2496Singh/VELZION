@@ -44,15 +44,13 @@ Velzion is a Zero-CI control plane that dynamically provisions isolated, ephemer
 
 ---
 
-## 🏗 Architecture & Overview
-
-Velzion bypasses traditional CI/CD pipelines and eliminates the need for `Dockerfile`s. It utilizes a fully decoupled microservice architecture:
-
-1. **The SPA Control Plane:** A React Router frontend that manages live environment state and predictive FinOps telemetry.
-2. **The Orchestrator:** n8n dynamically generates isolated Terraform workspaces to prevent state-file collisions.
-3. **The Infrastructure:** Terraform requests ephemeral AWS EC2 Spot Instances (e.g., `t3.micro`).
-4. **The Zero-CI Engine:** The instance auto-installs Docker and the CNCF `pack` CLI, clones the PR code, and utilizes **Paketo Buildpacks** to auto-detect the language and compile a live container natively.
-5. **The Telemetry:** Django tracks exact uptime down to the second, calculating real-time cost savings against modern AWS On-Demand pricing tables.
+## 🚀 Architecture & Stack
+Velzion MVP is a fully containerized microservice platform:
+* **Frontend:** React + Vite (Served via ultra-fast Nginx)
+* **Backend:** Django API (Python)
+* **Orchestrator:** n8n (Node.js with elevated execution permissions)
+* **Database:** PostgreSQL 15 (with native healthchecks)
+* **Infrastructure as Code:** Terraform (Auto-provisioning AWS Spot Instances)
 
 ---
 
@@ -66,72 +64,37 @@ Velzion bypasses traditional CI/CD pipelines and eliminates the need for `Docker
 
 ---
 
-## 📋 Prerequisites
 
-Before running Velzion locally, ensure you have the following installed:
 
-* **Node.js** (v20+)
-* **Python** (v3.12+)
-* **Docker & Docker Compose**
-* **Terraform CLI** * **AWS CLI** (Configured with an IAM user possessing EC2 provisioning permissions)
-* **Git**
+## 🛠️ Setup & Installation
 
----
-
-## 🛠 Installation & Setup
+This project is completely containerized. You do not need Node, Python, or Postgres installed on your local machine—only **Docker Desktop**.
 
 ### 1. Clone the Repository
 ```bash
-git clone [https://github.com/Parth2496Singh/VELZION.git](https://github.com/Parth2496Singh/VELZION.git)
-cd VELZION
+git clone https://github.com/Parth2496Singh/velzion-mvp.git
+cd velzion-mvp
 ```
 
-### 2. Configure Environment Variables
-You must set up your local secrets. These files are ignored by `.gitignore` for security.
-
-**Backend / AWS Secrets (`backend/.env`):**
-Create a `.env` file in the `backend/` directory:
-```env
-AWS_ACCESS_KEY_ID=your_aws_access_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-AWS_DEFAULT_REGION=us-east-1
-```
-
-**Frontend Secrets (`frontend/.env.local`):**
-Create a `.env.local` file in the `frontend/` directory:
-```env
-VITE_API_BASE_URL=[http://127.0.0.1:8000](http://127.0.0.1:8000)
-VITE_N8N_WEBHOOK_URL=http://localhost:5678/webhook
-```
-
-### 3. Start the Orchestration Layer (n8n & Postgres)
-This step uses the provided `docker-compose.yml` and the custom `n8n.Dockerfile` to compile the n8n engine with native Terraform and Docker execution permissions.
+### 2. Configure AWS Credentials
+Velzion requires AWS IAM credentials to automatically provision EC2 Spot instances.
+Copy the provided environment template:
 ```bash
-cd backend
+cp backend/.env.example backend/.env
+```
+*Open `backend/.env` and replace the placeholder values with your actual AWS keys.*
+
+### 3. Launch the Platform
+Because of our custom Docker network and multi-stage builds, the entire architecture boots with a single command:
+```bash
 docker-compose up --build -d
 ```
 
-### 4. Boot the Django Control Plane
-Ensure you install all required packages via the `requirements.txt` file.
-```bash
-# Still in the backend/ directory
-python -m venv venv
-source venv/bin/activate  # Or `venv\Scripts\activate` on Windows
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
-```
-
-### 5. Launch the React Control Plane
-Open a new terminal window:
-```bash
-cd frontend
-npm install
-npm run dev
-```
-The Velzion Control Plane will now be accessible at `http://localhost:5173`.
-
----
+### 4. Access the Services
+Once the database healthcheck passes and the containers are live, access the platform here:
+* **User Dashboard (React):** [http://localhost:5173](http://localhost:5173)
+* **API Control Plane (Django):** [http://localhost:8000/api/environments/](http://localhost:8000/api/environments/)
+* **FinOps Orchestrator (n8n):** [http://localhost:5678](http://localhost:5678)
 
 ## 💻 Usage
 
@@ -154,10 +117,14 @@ The Velzion Control Plane will now be accessible at `http://localhost:5173`.
 
 The current MVP demonstrates the core Zero-CI orchestration engine. The next iteration of Velzion will evolve into a fully managed enterprise SaaS platform:
 
-- [ ] **Velzard AI Integration:** Implementation of "Velzard", an intelligent routing and debugging layer that analyzes Paketo build logs to automatically suggest fixes for failed PR compilations.
-- [ ] **Enterprise AWS Onboarding (1-Click CloudFormation):** Transitioning away from hardcoded IAM keys. Enterprise customers will use a 1-click AWS CloudFormation template to securely grant Velzion an `AssumeRole` ARN.
-- [ ] **Official GitHub OAuth App:** Moving from manual URL inputs to a fully integrated GitHub App. Velzion will listen to native PR webhook events, automatically deploying environments and commenting the Live URL directly onto the GitHub PR timeline.
-- [ ] **Fully Managed Cloud Control Plane:** Migrating the Velzion control plane (Django/React/n8n) from local execution to a highly available AWS EKS (Kubernetes) architecture for global scale.
+## 🗺 Roadmap & Future Vision
+
+The current MVP demonstrates the core Zero-CI orchestration engine for ephemeral preview environments. The next iteration of Velzion will evolve into a fully managed enterprise SaaS platform:
+
+* **Velzard (The Production Engine):** For core production workloads requiring 24/7 high availability, Velzard automates infrastructure provisioning directly inside the user's AWS account. It securely configures dedicated Amazon EC2 On-Demand resources, provisions Nginx reverse proxy routing, and launches the application via production-hardened configurations.
+* **Enterprise AWS Onboarding (1-Click CloudFormation):** Transitioning away from hardcoded IAM keys. Enterprise customers will use a 1-click AWS CloudFormation template to securely grant Velzion an `AssumeRole` ARN.
+* **Official GitHub OAuth App:** Moving from manual URL inputs to a fully integrated GitHub App. Velzion will listen to native PR webhook events, automatically deploying environments and commenting the Live URL directly onto the GitHub PR timeline.
+* **Fully Managed Cloud Control Plane:** Migrating the Velzion control plane (Django/React/n8n) from local execution to a highly available AWS EKS (Kubernetes) architecture for global scale.
 
 ---
 
