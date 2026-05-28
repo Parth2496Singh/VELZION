@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -79,11 +80,13 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'velzion_db',
-        'USER': 'postgres',
-        'PASSWORD': 'velzion_secret_password',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        # This tells Django: "Use the Docker environment variables. 
+        # If they don't exist, fall back to the default strings."
+        'NAME': os.environ.get('DB_NAME', 'velzion_db'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'velzion_secret_password'),
+        'HOST': os.environ.get('DB_HOST', 'db'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 

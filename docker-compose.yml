@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # 1. The Database
+  db:
+    image: postgres:15
+    container_name: velzion-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: velzion
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d velzion"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. The n8n Orchestrator
+  n8n:
+    build:
+      context: ./backend
+      dockerfile: n8n.Dockerfile
+    container_name: velzion-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    env_file:
+      - ./backend/.env
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_ENABLE_EXECUTE_COMMAND=true
+      - NODES_EXCLUDE=[]
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./backend/terraform:/home/node/terraform
+
+  # 3. The Django Control Plane
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: velzion-django
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    env_file:
+      - ./backend/.env
+    environment:
+      - DB_HOST=db
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=velzion
+
+  # 4. The React SPA (Served via Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      # Inject the variables at BUILD time for Vite
+      args:
+        - VITE_API_BASE_URL=http://localhost:8000
+        - VITE_N8N_WEBHOOK_URL=http://localhost:5678/webhook
+    container_name: velzion-react
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      # Map your local 5173 to Nginx's internal port 80
+      - "5173:80"
+
+volumes:
+  pgdata:
+  n8n_data:
+    external: true
+    name: backend_n8n_data
