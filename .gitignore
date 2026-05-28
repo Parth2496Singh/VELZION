@@ -1,0 +1,55 @@
+# ====================================================================
+# VELZION MASTER SECURITY FILTER 🚀
+# ====================================================================
+
+# --- SYSTEM & OS TRASH ---
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# --- FRONTEND (REACT / VITE) ---
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/package-lock.json
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.production.local
+frontend/.vite/
+frontend/.vite-temp/
+
+# --- BACKEND (DJANGO / PYTHON) ---
+backend/venv/
+backend/ENV/
+backend/env/
+backend/.env
+backend/__pycache__/
+backend/**/*.pyc
+backend/db.sqlite3
+backend/db.sqlite3-journal
+
+# --- CONTAINERS & DATABASES (DOCKER / POSTGRES) ---
+backend/.docker-volumes/
+**/postgres_data/
+**/pgdata/
+
+# --- ORCHESTRATION LAYER (TERRAFORM) ---
+# Ignore the active engine cache blocks
+backend/terraform/.terraform/
+backend/terraform/.terraform.lock.hcl
+
+# Ignore all dynamic state logs containing active cloud coordinates
+backend/terraform/*.tfstate
+backend/terraform/*.tfstate.backup
+backend/terraform/*.tfvars
+backend/terraform/*.tfvars.json
+
+# CRITICAL: Nuke the local execution workspaces created by n8n!
+backend/terraform/workspace_pr_*/
+
+# --- SECURITY KEYS ---
+*.pem
+*.key
+*.pub
