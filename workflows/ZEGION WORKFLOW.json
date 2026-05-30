@@ -1,0 +1,234 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $('Webhook').item.json.body.action }}",
+              "rightValue": "closed",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1efa3bbf-cc8c-4886-b624-3e4996099500",
+      "name": "If PR Opened",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        656,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://54.86.145.100/api/webhooks/github/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-velzion-secret",
+              "value": "L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"repo_url\": \"{{ $('Webhook').first().json.body.repository.clone_url }}\",\n  \"pr_number\": \"{{ $('Webhook').first().json.body.number }}\",\n  \"status\": \"RUNNING\",\n  \"instance_id\": \"{{ JSON.parse($json.stdout).instance_id.value }}\",\n  \"dns_prefix\": \"http://{{ JSON.parse($json.stdout).public_ip.value }}\" \n}",
+        "options": {}
+      },
+      "id": "a8dee301-3bf6-4157-a148-ab1c2de39b9a",
+      "name": "Notify Django (Deploy)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1120,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://54.86.145.100/api/webhooks/github/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-velzion-secret",
+              "value": "L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"repo_url\": \"{{ $('Webhook').first().json.body.repository.clone_url }}\",\n  \"pr_number\": \"{{ $('Webhook').first().json.body.number }}\",\n  \"status\": \"DESTROYED\"\n}",
+        "options": {}
+      },
+      "id": "5ee84272-8a02-4906-8c47-c34e5e00bd52",
+      "name": "Notify Django (Destroy)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1120,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zegion-pr",
+        "options": {}
+      },
+      "id": "e63d841c-882e-4324-8410-8cd87554f22d",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        272,
+        272
+      ],
+      "webhookId": "053a4618-b96a-4e5b-8898-63ba54ba0da1"
+    },
+    {
+      "parameters": {
+        "url": "=http://54.86.145.100/api/integrations/lookup/?repo_url={{ encodeURIComponent($json.body.repository.clone_url) }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "repo_url",
+              "value": "={{ $json.body.repository.clone_url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        480,
+        272
+      ],
+      "id": "3c146273-40ba-4d39-90af-c96f0a9d3289",
+      "name": "Lookup Tenant"
+    },
+    {
+      "parameters": {
+        "command": "=# 1. Create a dynamic workspace for this PR\nPR_DIR=\"/home/node/terraform/workspace_pr_{{ $('Webhook').first().json.body.number }}\"\nmkdir -p $PR_DIR\ncp /home/node/terraform/main.tf $PR_DIR/main.tf\ncd $PR_DIR\n\n# 2. Deploy infrastructure via Terraform\nterraform init > /dev/null\n\nterraform apply \\\n  -var=\"pr_number={{ $('Webhook').first().json.body.number }}\" \\\n  -var=\"repo_url={{ $('Webhook').first().json.body.repository.clone_url }}\" \\\n  -auto-approve > /dev/null\n\n# 3. Add a 5-second buffer so AWS has time to attach the Public IP\nsleep 5\n\n# 4. Output the data for the next node\nterraform output -json"
+      },
+      "id": "fa50e1cd-2552-43bc-a891-8b2469e5e01c",
+      "name": "Deploy PR",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        880,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "command": "=PR_DIR=\"/home/node/terraform/workspace_pr_{{ $('Webhook').first().json.body.number }}\"\ncd $PR_DIR\n\n# Terminate the AWS instances\nterraform destroy \\\n  -var=\"pr_number={{ $('Webhook').first().json.body.number }}\" \\\n  -var=\"repo_url={{ $('Webhook').first().json.body.repository.clone_url }}\" \\\n  -auto-approve > /dev/null\n\n# Wipe the directory to save disk space\ncd ..\nrm -rf $PR_DIR\n\necho '{\"status\": \"destroyed\"}'"
+      },
+      "id": "530febb0-ab34-45f8-9dd2-75e871127aa3",
+      "name": "Destroy PR",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        880,
+        368
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If PR Opened": {
+      "main": [
+        [
+          {
+            "node": "Deploy PR",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Destroy PR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Lookup Tenant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Tenant": {
+      "main": [
+        [
+          {
+            "node": "If PR Opened",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deploy PR": {
+      "main": [
+        [
+          {
+            "node": "Notify Django (Deploy)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Destroy PR": {
+      "main": [
+        [
+          {
+            "node": "Notify Django (Destroy)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e1dc1670-82cc-480f-b456-7c0dde027f3a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1cb29f4e098cb2f50947765c80a4fb4db32b4b77f643a5ca0cd9995d4ba2c5a6"
+  },
+  "id": "SSj1JwBFxlo0pqaN",
+  "tags": []
+}
