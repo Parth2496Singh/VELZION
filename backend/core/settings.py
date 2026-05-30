@@ -12,9 +12,14 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+
+N8N_WEBHOOK_SECRET = os.environ.get('N8N_WEBHOOK_SECRET')
 
 
 # Quick-start development settings - unsuitable for production
@@ -23,10 +28,31 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-f$cv3&%u@^+$wakx2wd*o#(y2tff+ut#94_)nw0x8!v_me(x-_'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+# 1. THE SECRET KEY
+# Pulls from .env, fails safely if missing
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'unsafe-default-key-do-not-use')
+
+# 2. THE DEBUG SWITCH
+# This is the most important line in the file. It ensures DEBUG is ONLY True 
+# if the .env file explicitly says so. If it's missing, it defaults to False (Safe).
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+
+# 3. ALLOWED HOSTS
+# Converts our comma-separated .env string into a Python list
+allowed_hosts_env = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',')]
+
+# 4. CORS ORIGINS (For the React Frontend)
+# Converts the comma-separated .env string into a Python list
+cors_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173')
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_env.split(',')]
+
+# (Keep your GitHub Client IDs below this as they were)
+GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID')
+GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET')
+N8N_WEBHOOK_SECRET = os.environ.get('N8N_WEBHOOK_SECRET')
+
 
 
 # Application definition
@@ -41,6 +67,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'zegion',
     'corsheaders',
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -78,16 +105,9 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        # This tells Django: "Use the Docker environment variables. 
-        # If they don't exist, fall back to the default strings."
-        'NAME': os.environ.get('DB_NAME', 'velzion_db'),
-        'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'velzion_secret_password'),
-        'HOST': os.environ.get('DB_HOST', 'db'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL')
+    )
 }
 
 
@@ -128,3 +148,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+AUTH_USER_MODEL = 'users.UserProfile'
+
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None

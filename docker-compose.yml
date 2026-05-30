@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 services:
   # 1. The Database
@@ -39,6 +39,8 @@ services:
       - WEBHOOK_URL=http://localhost:5678/
       - N8N_ENABLE_EXECUTE_COMMAND=true
       - NODES_EXCLUDE=[]
+      - N8N_WEBHOOK_SECRET=L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
     volumes:
       - n8n_data:/home/node/.n8n
       - ./backend/terraform:/home/node/terraform
@@ -61,23 +63,31 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=password
       - DB_NAME=velzion
-
+    volumes:
+      - ./backend:/app
+    command: python manage.py runserver 0.0.0.0:8000
   # 4. The React SPA (Served via Nginx)
+  # 4. The React SPA (Vite Development Server)
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      # Inject the variables at BUILD time for Vite
-      args:
-        - VITE_API_BASE_URL=http://localhost:8000
-        - VITE_N8N_WEBHOOK_URL=http://localhost:5678/webhook
+
+    image: node:20-alpine
+    working_dir: /app
+    
     container_name: velzion-react
     restart: unless-stopped
     depends_on:
       - backend
     ports:
-      # Map your local 5173 to Nginx's internal port 80
-      - "5173:80"
+      - "5173:5173" 
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000
+      - VITE_N8N_WEBHOOK_URL=http://localhost:5678/webhook
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./frontend:/app          
+      - /app/node_modules        
+    command: sh -c "npm install && npm run dev -- --host"
 
 volumes:
   pgdata:

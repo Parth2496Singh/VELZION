@@ -17,7 +17,6 @@ class EphemeralEnvironment(models.Model):
         ('RUNNING', 'Running'),
         ('SLEEPING', 'Sleeping'),
         ('DESTROYED', 'Destroyed'),
-        
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
