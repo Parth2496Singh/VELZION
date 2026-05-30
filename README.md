@@ -84,7 +84,7 @@ Boot the entire multi-container architecture (PostgreSQL, n8n, Django API, React
 
     docker compose up --build -d
 
-Access the platform at `http://localhost:5173` (or your EC2 public IP).
+Access the platform at `http://localhost:5173` or `http://54.86.145.100/` (or your EC2 public IP).
 
 ---
 
@@ -94,7 +94,7 @@ To make Velzion fully autonomous, you must configure its integrations.
 
 ### Step 1: GitHub OAuth Setup (Authentication)
 1. Go to your GitHub Settings -> **Developer Settings** -> **OAuth Apps**.
-2. Create a new app. Set the **Homepage URL** to your Velzion domain and the **Callback URL** to `http://<YOUR_DOMAIN>/auth/github/callback`.
+2. Create a new app. Set the **Homepage URL** to your Velzion domain and the **Callback URL** to `http://http://54.86.145.100/auth/github/callback`.
 3. Generate a Client Secret.
 4. Add the `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` to your `backend/.env` file and restart Docker.
 
@@ -107,7 +107,7 @@ To make Velzion fully autonomous, you must configure its integrations.
 ### Step 3: GitHub Webhook Setup (The Trigger)
 1. Navigate to the GitHub repository you want to deploy PRs from.
 2. Go to **Settings** -> **Webhooks** -> **Add webhook**.
-3. **Payload URL:** `http://<YOUR_VELZION_IP>/n8n/webhook/zegion-pr` (For creating environments).
+3. **Payload URL:** `http://http://54.86.145.100/n8n/webhook/zegion-pr` (For creating environments).
 4. **Content type:** `application/json`
 5. Select **Let me select individual events** -> Check **Pull requests**.
 6. Save the webhook. *(Repeat this process for the `zegion-destroy` endpoint).*
