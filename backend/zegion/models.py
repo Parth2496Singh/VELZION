@@ -15,7 +15,9 @@ class EphemeralEnvironment(models.Model):
     STATUS_CHOICES = [
         ('PROVISIONING', 'Provisioning'),
         ('RUNNING', 'Running'),
+        ('BUILT', 'Built'),
         ('SLEEPING', 'Sleeping'),
+        ('WAKING', 'Waking'),       # 🔥 Added for native start transition tracking
         ('DESTROYED', 'Destroyed'),
     ]
 
@@ -26,6 +28,11 @@ class EphemeralEnvironment(models.Model):
     dns_prefix = models.CharField(max_length=50, blank=True, null=True)
     instance_id = models.CharField(max_length=50, blank=True, null=True)
     ttl_expires_at = models.DateTimeField(blank=True, null=True)
+    
+    # 🔥 FINOPS & AUDIT TRAIL TRACKING FIELD UPGRADES 🔥
+    terminated_at = models.DateTimeField(blank=True, null=True)
+    terminated_by = models.CharField(max_length=100, blank=True, null=True)
+    
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

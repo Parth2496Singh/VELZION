@@ -47,11 +47,17 @@ ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',')]
 # Converts the comma-separated .env string into a Python list
 cors_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173')
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_env.split(',')]
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = True
 
 # (Keep your GitHub Client IDs below this as they were)
 GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID')
 GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET')
 N8N_WEBHOOK_SECRET = os.environ.get('N8N_WEBHOOK_SECRET')
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = os.environ.get('DJANGO_DEBUG', 'False') == 'False'
+CSRF_COOKIE_SECURE = os.environ.get('DJANGO_DEBUG', 'False') == 'False'
 
 
 
