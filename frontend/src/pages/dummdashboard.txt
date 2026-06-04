@@ -1,769 +1,1141 @@
-import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import React, {
+  useState,
+  useEffect,
+  Suspense,
+  useRef
+} from "react";
 
-// --- FRAMER MOTION & LUCIDE ---
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Server, BarChart3, Shield, LogOut, ChevronDown, 
-  Trash2, ExternalLink, Play, PauseCircle, Loader2, CloudCog, Activity
-} from 'lucide-react';
+import {
+  Link,
+  useNavigate
+} from "react-router-dom";
 
-// --- 🆕 THE BLEEDING EDGE: REACT THREE FIBER ---
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, MeshDistortMaterial, Environment, ContactShadows } from '@react-three/drei';
+import { motion } from "framer-motion";
 
-axios.defaults.withCredentials = true;
-axios.defaults.xsrfCookieName = 'csrftoken';
-axios.defaults.xsrfHeaderName = 'X-CSRFToken';
+import {
+  LayoutDashboard,
+  BarChart3,
+  ShieldCheck,
+  Cloud,
+  Rocket,
+  Server,
+  User,
+  LogOut,
+  DollarSign,
+  TrendingUp,
+  Activity,
+  Sparkles,
+  ChevronDown,
+  Wallet,
+  PiggyBank,
+  Zap,
+  Gauge
+} from "lucide-react";
 
-// ----------------------------------------------------------------------
-// 🌌 3D COMPONENT: Abstract Cloud Node
-// ----------------------------------------------------------------------
-const HolographicNode = () => {
-  const meshRef = useRef();
+import { Canvas, useFrame } from "@react-three/fiber";
 
-  // Subtle rotation over time
-  useFrame((state, delta) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.x += delta * 0.2;
-      meshRef.current.rotation.y += delta * 0.3;
+import {
+  Float,
+  Stars,
+  OrbitControls,
+  Environment
+} from "@react-three/drei";
+
+const fadeUp = {
+  hidden: {
+    opacity: 0,
+    y: 30
+  },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6
     }
+  }
+};
+
+function FloatingOrb({
+  position,
+  color = "#00e5ff",
+  scale = 1
+}) {
+  const mesh = useRef();
+
+  useFrame((state) => {
+    if (!mesh.current) return;
+
+    mesh.current.rotation.x += 0.002;
+    mesh.current.rotation.y += 0.003;
+
+    mesh.current.position.y =
+      position[1] +
+      Math.sin(state.clock.elapsedTime) * 0.2;
   });
 
   return (
-    <Float speed={2} rotationIntensity={0.5} floatIntensity={2}>
-      <mesh ref={meshRef} scale={1.5}>
-        <icosahedronGeometry args={[1, 4]} />
-        <MeshDistortMaterial 
-          color="#00e5ff" 
-          emissive="#0044ff"
-          emissiveIntensity={0.5}
-          wireframe={true}
-          distort={0.4} 
-          speed={2} 
-          roughness={0.2}
-          metalness={0.8}
+    <Float speed={2}>
+      <mesh
+        ref={mesh}
+        position={position}
+        scale={scale}
+      >
+        <icosahedronGeometry args={[1, 1]} />
+
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={1}
+          wireframe
         />
-      </mesh>
-      
-      {/* Inner solid core */}
-      <mesh scale={0.8}>
-        <octahedronGeometry args={[1, 0]} />
-        <meshStandardMaterial color="#b366ff" transparent opacity={0.8} />
       </mesh>
     </Float>
   );
-};
+}
 
-const Dashboard = () => {
-  // --- ROUTING & WORKSPACE CONTEXT ---
-  const { owner, repo } = useParams();
-  const navigate = useNavigate();
-  const currentWorkspace = owner && repo ? `${owner}/${repo}` : null;
+function InfrastructureNodes() {
+  return (
+    <>
+      <FloatingOrb position={[-4,1,-1]} scale={0.8} />
+      <FloatingOrb position={[3,2,-2]} scale={1} />
+      <FloatingOrb position={[0,-2,-1]} scale={1.5} />
+      <FloatingOrb position={[-3,-1,-3]} scale={0.7} />
+      <FloatingOrb position={[5,-1,-2]} scale={0.9} />
+    </>
+  );
+}
 
-  // --- AUTH & USER STATE ---
+function EnterpriseBackground() {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 0,
+        opacity: 0.45
+      }}
+    >
+      <Canvas camera={{ position: [0,0,8] }}>
+        <Suspense fallback={null}>
+          <ambientLight intensity={0.6} />
+
+          <pointLight
+            position={[10,10,10]}
+            intensity={3}
+            color="#00e5ff"
+          />
+
+          <pointLight
+            position={[-10,-10,-10]}
+            intensity={2}
+            color="#7c3aed"
+          />
+
+          <Stars
+            radius={120}
+            depth={50}
+            count={7000}
+            factor={4}
+            fade
+          />
+
+          <InfrastructureNodes />
+
+          <Environment preset="city" />
+
+          <OrbitControls
+            enableZoom={false}
+            autoRotate
+            autoRotateSpeed={0.35}
+          />
+        </Suspense>
+      </Canvas>
+    </div>
+  );
+}
+const FinOpsCalculator = () => {
+  // ==========================================
+  // 1. AUTHENTICATION & ROUTING STATE
+  // ==========================================
   const [user, setUser] = useState(null);
-  const [workspaces, setWorkspaces] = useState([]); 
+  const navigate = useNavigate();
 
-  // --- UI STATE ---
-  const [activeTab, setActiveTab] = useState('environments'); 
-  const [message, setMessage] = useState(''); 
-  const [isLoaded, setIsLoaded] = useState(false); 
-
-  // --- DASHBOARD STATE ---
-  const [environments, setEnvironments] = useState([]);
-
-  // --- IAM SETUP STATE ---
-  const [iamRoleArn, setIamRoleArn] = useState('');
-  const [iamStatus, setIamStatus] = useState('');
-
-  // [Part 2 will continue with the useEffects and Logic...]
-// --- 🛡️ THE SECURITY BOUNCER (Intact Logic) ---
   useEffect(() => {
     const storedUser = localStorage.getItem('velzion_user');
-    const storedRepos = JSON.parse(localStorage.getItem('velzion_repos') || '[]');
-
-    if (!storedUser) {
-      navigate('/login');
-      return;
-    }
-
-    try {
-      setUser(JSON.parse(storedUser));
-      setWorkspaces(storedRepos);
-
-      if (currentWorkspace && storedRepos.length > 0) {
-        const hasAccess = storedRepos.some(r => 
-          (typeof r === 'string' ? r : r.full_name) === currentWorkspace
-        );
-
-        if (!hasAccess) {
-          alert(`🔒 ACCESS DENIED: You are not a collaborator on ${currentWorkspace}. Redirecting to safe zone.`);
-          navigate('/dashboard'); 
-        }
+    if (storedUser) {
+      try { 
+        setUser(JSON.parse(storedUser)); 
+      } catch (e) { 
+        console.error("Auth parse error"); 
       }
-      
-      // Sequence the initial load for Framer Motion orchestrations
-      setTimeout(() => setIsLoaded(true), 150);
-    } catch (e) {
-      localStorage.clear();
-      navigate('/login');
     }
-  }, [navigate, currentWorkspace]);
+  }, []);
 
-  // --- SMART DYNAMIC POLLING EFFECT (Intact Logic) ---
-  useEffect(() => {
-    let timeoutId;
-    let isMounted = true;
-
-    const pollData = () => {
-      if (!currentWorkspace) return;
-      
-      axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/environments/?repo=${currentWorkspace}`)
-        .then(res => {
-          if (!isMounted) return;
-          const data = res.data || [];
-          setEnvironments(Array.isArray(data) ? data : (data.environments || []));
-          
-          const hasActiveTransitions = data.some(e => 
-            ['PROVISIONING', 'DESTROYING...', 'BUILDING'].includes(e.status)
-          );
-          
-          timeoutId = setTimeout(pollData, hasActiveTransitions ? 5000 : 15000);
-        })
-        .catch(err => {
-          console.error("Error fetching environments:", err);
-          if (isMounted) timeoutId = setTimeout(pollData, 15000);
-        });
-    };
-
-    if (user && currentWorkspace) pollData();
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timeoutId);
-    };
-  }, [user, currentWorkspace]);
-
-  // --- AUTH LOGOUT ---
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem('velzion_user');
     navigate('/login');
   };
 
-  // --- DESTROY LOGIC (Intact Webhook Integration) ---
-  const isPipelineBusy = (environments || []).some(env => 
-    env.status === 'PROVISIONING' || env.status === 'DESTROYING...'
+  // ==========================================
+  // 2. THE 4-SLIDER "AGGRESSIVE TTL" STATE
+  // ==========================================
+  const [prsPerMonth, setPrsPerMonth] = useState(100);
+  const [standardLifespanDays, setStandardLifespanDays] = useState(4); // Drives Competitor Cost
+  const [activeHoursPerPr, setActiveHoursPerPr] = useState(2);         // Drives Zegion Spot Compute
+  const [strictTtlHours, setStrictTtlHours] = useState(4);             // Drives Zegion EBS Storage
+
+  const [showDetailedAudit, setShowDetailedAudit] = useState(false);
+
+  // ==========================================
+  // 3. BULLETPROOF FINOPS MATH
+  // ==========================================
+  // Base AWS Pricing (us-east-1)
+  const odHourly = 0.0104;   // t3.micro On-Demand Compute
+  const spotHourly = 0.0043; // t3.micro Spot Compute
+  const ebsHourly = 0.0022;  // 20GB gp3 Volume ($0.08/GB/mo)
+
+  // -- 1. Standard CI/CD Math (The Competitor) --
+  // Standard CI/CD spins up an On-Demand server and leaves it running 24/7 until merged
+  const standardPrHours = standardLifespanDays * 24;
+  const standardComputeCost = prsPerMonth * standardPrHours * odHourly;
+  const standardEbsCost = prsPerMonth * standardPrHours * ebsHourly;
+  const competitorTotalCost = standardComputeCost + standardEbsCost;
+
+  // -- 2. Zegion Math (Aggressive TTL & Event-Driven) --
+  // Compute is ONLY billed during active testing hours (Spot Pricing)
+  const zegionTotalActiveHours = prsPerMonth * activeHoursPerPr;
+  const zegionComputeCost = zegionTotalActiveHours * spotHourly;
+  
+  // EBS Storage is ONLY billed until the strict TTL ruthlessly destroys the environment
+  const zegionTotalTtlHours = prsPerMonth * strictTtlHours;
+  const zegionEbsCost = zegionTotalTtlHours * ebsHourly;
+  
+  const velzionTotalCost = zegionComputeCost + zegionEbsCost;
+
+  // -- 3. Savings Math --
+  const totalSavings = Math.max(0, competitorTotalCost - velzionTotalCost);
+  const savingsPercent = competitorTotalCost > 0 
+    ? ((totalSavings / competitorTotalCost) * 100).toFixed(1) 
+    : "0.0";
+
+  // -- 4. Waste Calculation (For Audit Table) --
+  const idleComputeHoursWasted = Math.max(0, (prsPerMonth * standardPrHours) - zegionTotalActiveHours);
+  const idleStorageHoursWasted = Math.max(0, (prsPerMonth * standardPrHours) - zegionTotalTtlHours);
+
+  // Visual Bar Chart Math
+  const maxBarCost = Math.max(competitorTotalCost, velzionTotalCost, 0.01);
+  const competitorWidth = `${(competitorTotalCost / maxBarCost) * 100}%`;
+  const velzionWidth = `${(velzionTotalCost / maxBarCost) * 100}%`;
+
+  // ==========================================
+  // 4. INLINE SVGS (Enterprise Aesthetics)
+  // ==========================================
+  const IconInfo = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+    </svg>
   );
-
-  const handleDestroy = (env) => {
-    setMessage(`Initiating Teardown for PR #${env.pr_number}...`);
-    setEnvironments((environments || []).map(e => e.id === env.id ? { ...e, status: 'DESTROYING...' } : e));
-
-    axios.post(`${import.meta.env.VITE_N8N_WEBHOOK_URL}/zegion-destroy`, {
-      repo_url: `https://github.com/${currentWorkspace}`, 
-      pr_number: env.pr_number
-    }).then(() => {
-      setMessage(`Teardown sequence triggered for PR #${env.pr_number}.`);
-      setTimeout(() => setMessage(''), 5000);
-    }).catch(err => {
-      setMessage(`Failed to reach Teardown Webhook.`);
-    });
-  };
-
-  // --- OPTIMIZED IAM INTEGRATION ---
-  const handleSaveIntegration = (e) => {
-    e.preventDefault();
-    if(!iamRoleArn || !currentWorkspace) return;
-    setIamStatus('saving');
-    
-    axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/projects/`, {
-      github_repo_url: `https://github.com/${currentWorkspace}`,
-      aws_role_arn: iamRoleArn,
-      vpc_id: 'vpc-default-mvp' 
-    }).then(() => {
-      setIamStatus('success');
-      setIamRoleArn('');
-      setTimeout(() => setIamStatus(''), 5000);
-    }).catch(err => setIamStatus('error'));
-  };
-
-  // --- STATE-AWARE FINOPS ENGINE (Intact Math) ---
-  const calculateFinOps = (env) => {
-    if (!env.created_at) return null;
-    const start = new Date(env.created_at);
-    const isFrozen = env.status === 'DESTROYED' || env.status === 'SLEEPING';
-    const end = (isFrozen && env.updated_at) ? new Date(env.updated_at) : new Date();
-    
-    const uptimeSeconds = Math.max(0, (end - start) / 1000);
-    const spotHourly = 0.0043; const odHourly = 0.0104;
-    const spotCost = (uptimeSeconds * (spotHourly / 3600)).toFixed(5);
-    const odCost = (uptimeSeconds * (odHourly / 3600)).toFixed(5);
-    const savings = (uptimeSeconds * ((odHourly - spotHourly) / 3600)).toFixed(5);
-    const savingsPercent = (((odHourly - spotHourly) / odHourly) * 100).toFixed(1);
-
-    const h = Math.floor(uptimeSeconds / 3600);
-    const m = Math.floor((uptimeSeconds % 3600) / 60);
-    const s = Math.floor(uptimeSeconds % 60);
-    const uptimeString = h > 0 ? `${h}h ${m}m ${s}s` : m > 0 ? `${m}m ${s}s` : `${s}s`;
-
-    return { spotCost, odCost, savings, uptimeString, savingsPercent, isFrozen };
-  };
-
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const hasLiveEnvs = environments.some(e => e.status === 'RUNNING' || e.status === 'PROVISIONING');
-    if (hasLiveEnvs) {
-      const timer = setInterval(() => setTick(t => t + 1), 1000);
-      return () => clearInterval(timer);
-    }
-  }, [environments]);
-
-  if (!user) return null;
-
-  const cfnLink = `https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/review?templateURL=https://velzion-public-templates-12345.s3.us-east-1.amazonaws.com/velzion-trust.yaml&stackName=Velzion-Integration`;
+  const IconServer = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line>
+    </svg>
+  );
+  const IconCloud = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+    </svg>
+  );
+  const IconRocket = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>
+    </svg>
+  );
 
   return (
     <div className="vz-dashboard">
+      <EnterpriseBackground />
       <style>{`
-        /* ==========================================================================
-           🚀 VELZION BLEEDING-EDGE DESIGN SYSTEM
-           ========================================================================== */
-        
         :root {
-          /* Deep Space Palette */
-          --bg-base: #030406;
-          --bg-surface: rgba(10, 12, 16, 0.6);
-          --bg-surface-hover: rgba(16, 20, 26, 0.8);
-          
-          /* Neon Accents */
-          --accent-cyan: #00f0ff;
-          --accent-cyan-glow: rgba(0, 240, 255, 0.4);
-          --accent-emerald: #00ff9d;
-          --accent-emerald-glow: rgba(0, 255, 157, 0.3);
-          --accent-purple: #9d4edd;
-          --accent-purple-glow: rgba(157, 78, 221, 0.4);
-          --accent-amber: #ffaa00;
-          --accent-rose: #ff0055;
-          
-          /* Typography */
-          --text-main: #ffffff;
-          --text-muted: #8a919e;
-          --font-main: 'Inter', system-ui, -apple-system, sans-serif;
-          --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-          
-          /* Glass Morphics */
-          --glass-border: rgba(255, 255, 255, 0.05);
-          --glass-highlight: rgba(255, 255, 255, 0.1);
-          --glass-shadow: 0 30px 60px -12px rgba(0,0,0,0.8);
+          --bg-dark: #050505;
+          --bg-card: rgba(18, 20, 24, 0.7);
+          --border-color: rgba(255, 255, 255, 0.08);
+          --accent-cyan: #00e5ff;
+          --accent-cyan-dim: rgba(0, 229, 255, 0.1);
+          --accent-emerald: #10b981;
+          --accent-emerald-dim: rgba(16, 185, 129, 0.15);
+          --accent-red: #ef4444;
+          --accent-red-dim: rgba(239, 68, 68, 0.15);
+          --accent-indigo: #818cf8;
+          --accent-amber: #f59e0b;
+          --text-main: #f3f4f6;
+          --text-muted: #9ca3af;
+          --font-family: 'Inter', system-ui, sans-serif;
         }
+        body { margin: 0; background: var(--bg-dark); }
+        .vz-dashboard { display: flex; min-height: 100vh; color: var(--text-main); font-family: var(--font-family); background-color: var(--bg-dark); background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px); background-size: 40px 40px; }
+        .vz-sidebar { width: 260px; background-color: rgba(10, 10, 12, 0.95); backdrop-filter: blur(10px); border-right: 1px solid var(--border-color); padding: 32px 24px; display: flex; flex-direction: column; z-index: 10; }
+        .vz-logo-container { display: flex; align-items: center; gap: 12px; margin-bottom: 48px; }
+        .vz-logo-box { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent-cyan), #0077ff); border-radius: 8px; box-shadow: 0 0 20px var(--accent-cyan-dim); }
+        .vz-logo-text { margin: 0; font-size: 20px; letter-spacing: 2px; font-weight: 800; color: #fff; }
+        .vz-nav-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 1.5px; margin: 0 0 16px 8px; }
+        .vz-nav-item { padding: 12px 16px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s ease; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 12px; font-weight: 500; font-size: 14px; }
+        .vz-nav-item:hover { background-color: rgba(255,255,255,0.03); color: #fff; }
+        .vz-nav-item.active { background-color: var(--accent-cyan-dim); color: var(--accent-cyan); border: 1px solid rgba(0, 229, 255, 0.2); }
+        .vz-main { flex: 1; padding: 40px 60px; overflow-y: auto; position: relative; z-index: 5; }
+        .vz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 48px; }
+        .vz-header-titles h1 { color: #fff; margin: 0 0 8px 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
+        .vz-header-titles p { color: var(--text-muted); margin: 0; font-size: 15px; }
+        .vz-header-actions { display: flex; align-items: center; gap: 24px; }
+        .vz-profile { display: flex; align-items: center; gap: 16px; padding-right: 24px; border-right: 1px solid var(--border-color); }
+        .vz-avatar-fallback { width: 40px; height: 40px; border-radius: 50%; background-color: var(--accent-cyan-dim); color: var(--accent-cyan); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; border: 1px solid var(--accent-cyan); }
+        .vz-username { font-weight: 600; color: #fff; font-size: 14px; margin: 0; }
+        .vz-btn-logout {display: flex;
+align-items: center;
+justify-content: center;
+gap: 8px; background-color: transparent; color: var(--text-muted); border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .vz-btn-logout:hover { color: #fff; border-color: #555; }
+        .calc-card{
+  position:relative;
 
-        /* --- GLOBAL RESETS & SCROLLBAR --- */
-        body { 
-          margin: 0; 
-          background-color: var(--bg-base); 
-          color: var(--text-main);
-          font-family: var(--font-main);
-          -webkit-font-smoothing: antialiased;
-          overflow-x: hidden;
-        }
+  background:
+  linear-gradient(
+    135deg,
+    rgba(18,20,24,.85),
+    rgba(10,12,18,.95)
+  );
 
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-base); }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+  backdrop-filter:blur(30px);
 
-        /* --- 🌌 THE HOLOGRAPHIC GRID BACKGROUND --- */
-        .vz-dashboard {
-          display: flex; 
-          min-height: 100vh; 
-          position: relative; 
-          z-index: 1;
-          background-image: 
-            linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-          background-size: 40px 40px;
-          background-position: center center;
-          perspective: 1000px;
-        }
+  border:1px solid rgba(255,255,255,.08);
 
-        /* Animated Mesh Gradients */
-        .vz-dashboard::before, .vz-dashboard::after {
-          content: ''; 
-          position: fixed; 
-          border-radius: 50%; 
-          filter: blur(150px); 
-          z-index: -1;
-          pointer-events: none;
-          transform: translateZ(0); 
-        }
-        .vz-dashboard::before {
-          width: 800px; height: 800px; 
-          background: radial-gradient(circle, rgba(0,240,255,0.06) 0%, transparent 70%);
-          top: -200px; left: -200px;
-          animation: meshPulse 15s infinite alternate ease-in-out;
-        }
-        .vz-dashboard::after {
-          width: 900px; height: 900px; 
-          background: radial-gradient(circle, rgba(157,78,221,0.06) 0%, transparent 70%);
-          bottom: -300px; right: -200px; 
-          animation: meshPulse 20s infinite alternate-reverse ease-in-out;
-        }
+  border-radius:24px;
 
-        @keyframes meshPulse {
-          0% { transform: scale(1) translate(0, 0); opacity: 0.5; }
-          50% { transform: scale(1.2) translate(50px, -50px); opacity: 1; }
-          100% { transform: scale(0.9) translate(-50px, 50px); opacity: 0.5; }
-        }
+  overflow:hidden;
 
-        /* --- 🧊 PREMIUM GLASS PANELS --- */
-        .glass-panel {
-          background: var(--bg-surface); 
-          backdrop-filter: blur(30px); 
-          -webkit-backdrop-filter: blur(30px);
-          border: 1px solid var(--glass-border); 
-          border-top: 1px solid var(--glass-highlight);
-          border-radius: 20px; 
-          box-shadow: var(--glass-shadow);
-          position: relative;
-          overflow: hidden;
-          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
+  padding:40px;
 
-        /* Advanced Hover Glow Injection */
-        .glass-panel::before {
-          content: '';
-          position: absolute;
-          top: 0; left: 0; right: 0; bottom: 0;
-          background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.06), transparent 40%);
-          z-index: 0;
-          opacity: 0;
-          transition: opacity 0.5s;
-          pointer-events: none;
-        }
-        .glass-panel:hover::before { opacity: 1; }
+  max-width:1000px;
 
-        /* Content needs to sit above the hover gradient */
-        .glass-panel > * { position: relative; z-index: 1; }
+  margin:0 auto;
 
-        /* --- BUTTONS & INTERACTIVE ELEMENTS --- */
-        .vz-btn {
-          padding: 12px 24px;
-          border-radius: 12px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-          text-decoration: none;
-          border: none;
-          font-size: 14px;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .vz-btn::after {
-          content: ''; position: absolute; inset: 0; 
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-          transform: translateX(-100%);
-          transition: 0.5s;
-        }
-        .vz-btn:hover::after { transform: translateX(100%); }
+  box-shadow:
+    0 30px 80px rgba(0,0,0,.6),
+    0 0 60px rgba(0,229,255,.05);
+} 
+.calc-card::before{
+  content:"";
 
-        .vz-btn-calc {
-          background: rgba(0, 240, 255, 0.1);
-          color: var(--accent-cyan);
-          border: 1px solid rgba(0, 240, 255, 0.2);
-          box-shadow: 0 4px 20px rgba(0, 240, 255, 0.1);
-        }
-        .vz-btn-calc:hover {
-          background: rgba(0, 240, 255, 0.15);
-          transform: translateY(-2px) scale(1.02);
-          box-shadow: 0 8px 30px rgba(0, 240, 255, 0.2);
-        }
+  position:absolute;
 
-        /* --- 3D CANVAS CONTAINER --- */
-        .canvas-container {
-          position: absolute;
-          inset: 0;
-          z-index: -1;
-          pointer-events: none; /* Let clicks pass through to UI */
-        }
-      `}</style>
-{/* ---------------- SIDEBAR (Glassmorphic) ---------------- */}
-      <div className="vz-sidebar" style={{ width: '280px', borderRight: '1px solid var(--glass-border)', padding: '40px 24px', display: 'flex', flexDirection: 'column', zIndex: 10, background: 'rgba(5, 6, 8, 0.4)', backdropFilter: 'blur(40px)' }}>
-        <div className="vz-logo-container" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '56px' }}>
-          <div className="vz-logo-box" style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg, var(--accent-cyan), #0055ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 24px var(--accent-cyan-glow)' }}>
-            <CloudCog color="#ffffff" size={24} />
-          </div>
-          <h2 style={{ margin: 0, fontSize: '24px', letterSpacing: '4px', fontWeight: 900, background: 'linear-gradient(to right, #fff, #8a919e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>VELZION</h2>
+  inset:0;
+
+  padding:1px;
+
+  border-radius:24px;
+
+  background:
+  linear-gradient(
+    90deg,
+    rgba(0,229,255,.3),
+    rgba(124,58,237,.3),
+    rgba(0,229,255,.3)
+  );
+
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+
+  -webkit-mask-composite:xor;
+
+  pointer-events:none;
+}
+        .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 10px; }
+       .vz-slider-group{
+  background:
+  linear-gradient(
+    135deg,
+    rgba(255,255,255,.04),
+    rgba(255,255,255,.01)
+  );
+
+  border:1px solid rgba(255,255,255,.06);
+
+  border-radius:18px;
+
+  padding:24px;
+
+  transition:.35s;
+
+  position:relative;
+
+  overflow:hidden;
+}
+        .vz-slider-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; font-weight: 600; font-size: 15px; }
+         { font-family:.vz-slider-val 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; background: rgba(255,255,255,0.05); padding: 6px 14px; border-radius: 6px; display: inline-block;}
+        .vz-range { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.1); outline: none; transition: 0.2s; margin-top: 10px;}
+        .vz-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; transition: 0.2s; }
+        .vz-range::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        .range-red::-webkit-slider-thumb { background: var(--accent-red); box-shadow: 0 0 15px var(--accent-red); }
+        .range-cyan::-webkit-slider-thumb { background: var(--accent-cyan); box-shadow: 0 0 15px var(--accent-cyan); }
+        .range-indigo::-webkit-slider-thumb { background: var(--accent-indigo); box-shadow: 0 0 15px var(--accent-indigo); }
+        .range-amber::-webkit-slider-thumb { background: var(--accent-amber); box-shadow: 0 0 15px var(--accent-amber); }
+        .tooltip-container { position: relative; display: inline-flex; align-items: center; gap: 8px; cursor: help; }
+        .tooltip-icon { color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: 0.2s; flex-shrink: 0;}
+        .tooltip-container:hover .tooltip-icon { color: var(--accent-cyan); }
+        .tooltip-text { visibility: hidden; width: 280px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); color: #fff; text-align: left; border-radius: 8px; padding: 14px; font-size: 13px; font-weight: 400; line-height: 1.5; position: absolute; z-index: 100; bottom: 125%; left: 0%; opacity: 0; transition: opacity 0.3s; border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .tooltip-text::after { content: ""; position: absolute; top: 100%; left: 20px; margin-left: -5px; border-width: 5px; border-style: solid; border-color: rgba(15, 23, 42, 0.95) transparent transparent transparent; }
+        .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
+        .calc-results { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; }
+        .calc-box { background: rgba(0,0,0,0.4); padding: 24px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: center; }
+        .calc-box-label { color: var(--text-muted); font-size: 13px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;}
+        .calc-money { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 800; margin: 0; }
+        .calc-hero{
+  grid-column:span 2;
+
+  text-align:center;
+
+  position:relative;
+
+  overflow:hidden;
+
+  padding:50px;
+
+  border-radius:20px;
+
+  background:
+  linear-gradient(
+    135deg,
+    rgba(16,185,129,.22),
+    rgba(16,185,129,.05)
+  );
+
+  border:1px solid rgba(16,185,129,.25);
+
+  box-shadow:
+  0 0 50px rgba(16,185,129,.12);
+}
+        .calc-hero::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); animation: shine 3s infinite; }
+        @keyframes shine { 100% { left: 200%; } }
+        .audit-toggle-btn { background: transparent; border: 1px dashed var(--border-color); color: var(--text-muted); width: 100%; padding: 16px; margin-top: 30px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .audit-toggle-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); background: rgba(0, 229, 255, 0.05); }
+        .audit-panel { background: rgba(0,0,0,0.5); border-radius: 12px; border: 1px solid var(--border-color); margin-top: 20px; padding: 24px; animation: slideDown 0.3s ease-out forwards; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .audit-table { width: 100%; border-collapse: collapse; }
+        .audit-table th { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: #fff; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+        .audit-table td { padding: 16px 12px; border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 14px; color: var(--text-muted); }
+        .audit-table td:last-child, .audit-table th:last-child { text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #fff;}
+        .audit-highlight { color: var(--accent-red); font-weight: bold; }
+        .audit-success { color: var(--accent-cyan); font-weight: bold; }
+        .bar-chart-container { margin-top: 40px; padding-top: 30px; border-top: 1px solid var(--border-color); }
+        .bar-row { display: flex; align-items: center; margin-bottom: 20px; gap: 16px; }
+        .bar-label { width: 160px; font-size: 13px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 8px;}
+        .bar-track { flex: 1; height: 28px; background: rgba(255,255,255,0.05); border-radius: 14px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.02);}
+        .bar-fill { height: 100%; border-radius: 14px; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; padding-right: 12px; justify-content: flex-end; color: rgba(255,255,255,0.8); font-size: 11px; font-weight: bold;}
+        .bar-red { background: linear-gradient(90deg, #991b1b, var(--accent-red)); box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        .bar-cyan { background: linear-gradient(90deg, #0369a1, var(--accent-cyan)); box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        .arch-section { margin-top: 80px; max-width: 900px; margin-left: auto; margin-right: auto; }
+        .arch-title { text-align: center; color: #fff; font-size: 28px; margin-bottom: 10px; letter-spacing: -0.5px; }
+        .arch-subtitle { text-align: center; color: var(--text-muted); margin-bottom: 40px; font-size: 16px; }
+        .arch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .arch-card { background: rgba(18, 20, 24, 0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 28px; position: relative; overflow: hidden; transition: 0.3s; }
+        .arch-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.15); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .arch-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
+        .card-legacy::before { background: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); }
+        .card-basic::before { background: var(--accent-amber); box-shadow: 0 0 10px var(--accent-amber); }
+        .card-optimized::before { background: var(--accent-cyan); box-shadow: 0 0 10px var(--accent-cyan); }
+        .arch-icon { margin-bottom: 20px; display: inline-flex; align-items: center; justify-content: center; padding: 14px; border-radius: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); color: #fff; }
+        .arch-card h3 { margin: 0 0 12px 0; color: #fff; font-size: 18px; }
+        .arch-card p { margin: 0 0 20px 0; color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+        .arch-feature { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; font-size: 13px; color: #d1d5db; line-height: 1.4;}
+        .arch-feature span { color: var(--accent-emerald); font-weight: bold; }
+        .arch-feature.negative span { color: var(--accent-red); }
+        .lifecycle-section { margin-top: 80px; max-width: 900px; margin-left: auto; margin-right: auto; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 40px; }
+        .lifecycle-step { display: flex; gap: 24px; margin-bottom: 30px; position: relative; }
+        .lifecycle-step:last-child { margin-bottom: 0; }
+        .lifecycle-step::before { content: ''; position: absolute; left: 24px; top: 50px; bottom: -30px; width: 2px; background: rgba(255,255,255,0.1); }
+        .lifecycle-step:last-child::before { display: none; }
+        .step-number { width: 50px; height: 50px; border-radius: 50%; background: var(--bg-card); border: 2px solid var(--accent-cyan); color: var(--accent-cyan); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; z-index: 2; flex-shrink: 0; box-shadow: 0 0 15px var(--accent-cyan-dim);}
+        .step-content h4 { color: #fff; margin: 0 0 8px 0; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+        .step-content p { color: var(--text-muted); font-size: 15px; line-height: 1.6; margin: 0; }
+        .step-badge { background: var(--accent-indigo-dim); color: var(--accent-indigo); padding: 4px 10px; border-radius: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border: 1px solid rgba(129, 140, 248, 0.2); font-weight: bold;}
+      .enterprise-main-title{
+  font-size:3rem;
+  font-weight:800;
+  line-height:1.1;
+
+  background:
+  linear-gradient(
+    90deg,
+    #00e5ff,
+    #7c3aed,
+    #00e5ff
+  );
+
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.enterprise-subtitle{
+  color:#9ca3af;
+  font-size:1.05rem;
+  max-width:700px;
+}
+
+.metric-header{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.metric-header svg{
+  color:#00e5ff;
+}
+
+.calc-box{
+  transition:all .4s ease;
+}
+
+.calc-box:hover{
+  transform:translateY(-6px);
+
+  box-shadow:
+  0 0 30px rgba(0,229,255,.15);
+}
+.calc-controls{
+  position: relative;
+
+  background: rgba(255,255,255,0.04);
+
+  backdrop-filter: blur(24px);
+
+  border: 1px solid rgba(255,255,255,0.08);
+
+  border-radius: 28px;
+
+  padding: 28px;
+
+  box-shadow:
+    0 20px 80px rgba(0,0,0,.4),
+    0 0 40px rgba(0,229,255,.05);
+}
+.value-badge{
+  display:inline-flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  min-width:56px;
+
+  padding:6px 12px;
+
+  border-radius:999px;
+
+  background:
+  linear-gradient(
+    90deg,
+    rgba(0,229,255,.15),
+    rgba(124,58,237,.15)
+  );
+
+  border:1px solid rgba(255,255,255,.08);
+
+  color:#fff;
+
+  font-weight:700;
+}
+.executive-grid{
+  display:grid;
+
+  grid-template-columns:
+  repeat(4,1fr);
+
+  gap:20px;
+
+  margin-bottom:30px;
+}
+
+.executive-card{
+  position:relative;
+
+  overflow:hidden;
+
+  padding:24px;
+
+  border-radius:20px;
+
+  background:
+  linear-gradient(
+    135deg,
+    rgba(255,255,255,.05),
+    rgba(255,255,255,.01)
+  );
+
+  border:1px solid rgba(255,255,255,.08);
+
+  backdrop-filter:blur(20px);
+
+  transition:.35s;
+}
+
+.executive-card:hover{
+  border-color:
+  rgba(0,229,255,.3);
+
+  box-shadow:
+  0 20px 50px rgba(0,229,255,.08);
+}
+
+.executive-card svg{
+  color:#00e5ff;
+
+  margin-bottom:12px;
+}
+
+.executive-card h4{
+  margin:0;
+
+  color:#9ca3af;
+
+  font-size:13px;
+
+  text-transform:uppercase;
+
+  letter-spacing:1px;
+}
+
+.executive-card h2{
+  margin:10px 0;
+
+  color:white;
+
+  font-size:32px;
+
+  font-weight:800;
+}
+
+.executive-card span{
+  color:#9ca3af;
+
+  font-size:12px;
+}
+.arch-card{
+  transform-style: preserve-3d;
+}
+
+.executive-card::before{
+  content:"";
+
+  position:absolute;
+
+  inset:-1px;
+
+  border-radius:20px;
+
+  background:
+  linear-gradient(
+    90deg,
+    rgba(0,229,255,.15),
+    transparent,
+    rgba(124,58,237,.15)
+  );
+
+  opacity:0;
+
+  transition:.4s;
+}
+
+.executive-card:hover::before{
+  opacity:1;
+}`}</style>
+
+      {/* ========================================== */}
+      {/* 5. SIDEBAR NAVIGATION                        */}
+      {/* ========================================== */}
+      <div className="vz-sidebar">
+        <div className="vz-logo-container">
+          <div className="vz-logo-box"></div>
+          <h2 className="vz-logo-text">VELZION</h2>
         </div>
-        
-        <p style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '2px', margin: '0 0 16px 12px' }}>Platform Control</p>
-        
-        <div 
-          onClick={() => currentWorkspace && setActiveTab('environments')} 
-          style={{ padding: '16px 20px', borderRadius: '14px', marginBottom: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px', fontWeight: 600, fontSize: '14px', color: activeTab === 'environments' ? '#fff' : '#8a919e', background: activeTab === 'environments' ? 'rgba(0, 240, 255, 0.1)' : 'transparent', borderLeft: activeTab === 'environments' ? '3px solid var(--accent-cyan)' : '3px solid transparent', transition: 'all 0.3s', opacity: !currentWorkspace ? 0.3 : 1 }}
-        >
-          <Server size={18} color={activeTab === 'environments' ? 'var(--accent-cyan)' : 'currentColor'} /> Active Deployments
-        </div>
-        
-        <Link to="/finopscalculator" style={{ padding: '16px 20px', borderRadius: '14px', marginBottom: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px', fontWeight: 600, fontSize: '14px', color: '#8a919e', textDecoration: 'none', borderLeft: '3px solid transparent', transition: 'all 0.3s' }}>
-          <BarChart3 size={18} /> FinOps Dashboard
+        <p className="vz-nav-label">Platform Control</p>
+        <Link to="/dashboard" className="vz-nav-item">
+          <span style={{ fontSize: '16px' }}><Activity size={18} /></span> Active Deployments
         </Link>
-        
-        <div 
-          onClick={() => currentWorkspace && setActiveTab('iam')} 
-          style={{ padding: '16px 20px', borderRadius: '14px', marginBottom: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px', fontWeight: 600, fontSize: '14px', color: activeTab === 'iam' ? '#fff' : '#8a919e', background: activeTab === 'iam' ? 'rgba(157, 78, 221, 0.1)' : 'transparent', borderLeft: activeTab === 'iam' ? '3px solid var(--accent-purple)' : '3px solid transparent', transition: 'all 0.3s', opacity: !currentWorkspace ? 0.3 : 1 }}
-        >
-          <Shield size={18} color={activeTab === 'iam' ? 'var(--accent-purple)' : 'currentColor'} /> Security & IAM
+        <div className="vz-nav-item active">
+          <span style={{ fontSize: '16px' }}><BarChart3 size={18} /></span> FinOps Dashboard
+        </div>
+        <div className="vz-nav-item" onClick={() => navigate('/dashboard')} style={{cursor: 'pointer'}}>
+          <span style={{ fontSize: '16px' }}><ShieldCheck size={18} /></span> Security & IAM
         </div>
       </div>
 
-      {/* ---------------- MAIN CONTENT ---------------- */}
-      <div className="vz-main" style={{ flex: 1, padding: '48px 72px', overflowY: 'auto', position: 'relative', zIndex: 5 }}>
+      {/* ========================================== */}
+      {/* 6. MAIN CONTENT WRAPPER                      */}
+      {/* ========================================== */}
+      <div className="vz-main">
         
-        {/* HEADER */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '56px' }}
-        >
-          <div>
-            <h1 style={{ margin: '0 0 8px 0', fontSize: '42px', fontWeight: 800, letterSpacing: '-1.5px', textShadow: '0 0 40px rgba(255,255,255,0.2)' }}>
-              {currentWorkspace ? currentWorkspace.split('/')[1] : 'Control Plane'}
-            </h1>
-            <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '16px', fontWeight: 500 }}>
-              {currentWorkspace ? `Isolated Workspace: ${currentWorkspace}` : 'Select a workspace to begin orchestration'}
-            </p>
+        <div className="vz-header">
+          <div className="vz-header-titles">
+            <motion.h1
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.8 }}
+  className="enterprise-main-title"
+>
+  Cloud Cost Intelligence Platform
+</motion.h1>
+            <motion.p
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ delay: 0.3 }}
+  className="enterprise-subtitle"
+>
+  Analyze infrastructure waste, optimize deployment
+  economics, and simulate enterprise-scale savings.
+</motion.p>
+          </div>
+          <div className="vz-header-actions">
+            <div className="vz-profile">
+              <div className="vz-avatar-fallback">
+  <User size={22} />
+</div>
+              <div className="vz-user-info"><p className="vz-username">{user?.username || 'Admin'}</p></div>
+            </div>
+            <button onClick={handleLogout} className="vz-btn-logout">
+  <LogOut size={16} />
+  <span>Sign Out</span>
+</button>
+          </div>
+        </div>
+
+        {/* ========================================== */}
+        {/* 7. INTERACTIVE CALCULATOR CARD             */}
+        {/* ========================================== */}
+        <div className="calc-card">
+          <div className="executive-grid">
+
+  <motion.div
+    className="executive-card"
+    whileHover={{ y: -6 }}
+  >
+    <Wallet size={24} />
+
+    <h4>Cloud Spend</h4>
+
+    <h2>
+      ${competitorTotalCost.toFixed(0)}
+    </h2>
+
+    <span>Monthly Baseline</span>
+  </motion.div>
+
+  <motion.div
+    className="executive-card"
+    whileHover={{ y: -6 }}
+  >
+    <PiggyBank size={24} />
+
+    <h4>Potential Savings</h4>
+
+    <h2>
+      ${totalSavings.toFixed(0)}
+    </h2>
+
+    <span>Optimization Gain</span>
+  </motion.div>
+
+  <motion.div
+    className="executive-card"
+    whileHover={{ y: -6 }}
+  >
+    <Zap size={24} />
+
+    <h4>Efficiency Score</h4>
+
+    <h2>
+      {savingsPercent}%
+    </h2>
+
+    <span>Infrastructure Efficiency</span>
+  </motion.div>
+
+  <motion.div
+    className="executive-card"
+    whileHover={{ y: -6 }}
+  >
+    <Gauge size={24} />
+
+    <h4>Deployments</h4>
+
+    <h2>
+      {prsPerMonth}
+    </h2>
+
+    <span>PR Environments</span>
+  </motion.div>
+
+</div>
+          
+          <div className="calc-grid">
+            
+            {/* Slider 1: PRs Per Month */}
+            <div className="vz-slider-group full-width" style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <div>
+                <div className="vz-slider-header" style={{ marginBottom: '5px' }}>
+                  <span style={{color: '#fff', fontSize: '18px'}}>Pull Requests per Month</span>
+                </div>
+                <p style={{fontSize: '12px', color: 'var(--text-muted)', margin: '0 0 15px 0', maxWidth: '300px'}}>The total number of ephemeral environments provisioned monthly across your organization.</p>
+              </div>
+              <div style={{ flex: 1, paddingLeft: '40px' }}>
+                <div style={{ textAlign: 'right', marginBottom: '10px' }}><span className="vz-slider-val" style={{color: 'var(--accent-cyan)'}}>{prsPerMonth} PRs</span></div>
+                <input type="range" min="10" max="500" step="5" value={prsPerMonth} onChange={(e) => setPrsPerMonth(e.target.value)} className="vz-range range-cyan" />
+              </div>
+            </div>
+
+            {/* Slider 2: Standard CI/CD Lifespan */}
+            <div className="vz-slider-group">
+              <div className="vz-slider-header">
+                <div className="tooltip-container">
+                  <span style={{color: '#fff'}}>Standard PR Lifespan (Days)</span>
+                  <span className="tooltip-icon"><IconInfo /></span>
+                  <span className="tooltip-text"><b>The Competitor:</b> Standard CI/CD providers leave instances running 24/7 until the code is actually merged or closed.</span>
+                </div>
+                <span className="vz-slider-val" style={{color: 'var(--accent-red)'}}>{standardLifespanDays} Days</span>
+              </div>
+              <input type="range" min="1" max="14" step="1" value={standardLifespanDays} onChange={(e) => setStandardLifespanDays(e.target.value)} className="vz-range range-red" />
+              <p style={{fontSize: '11px', color: 'var(--text-muted)', margin: '15px 0 0 0'}}>Calculates standard 24/7 On-Demand compute + storage waste.</p>
+            </div>
+
+            {/* Slider 3: Zegion Active Time */}
+            <div className="vz-slider-group">
+              <div className="vz-slider-header">
+                <div className="tooltip-container">
+                  <span style={{color: '#fff'}}>Zegion Active Testing Time</span>
+                  <span className="tooltip-icon"><IconInfo /></span>
+                  <span className="tooltip-text"><b>Drives Zegion Compute:</b> Thanks to Auto-Sleep, Compute billing is limited ONLY to the hours a developer actively tests the live URL.</span>
+                </div>
+                <span className="vz-slider-val" style={{color: 'var(--accent-emerald)'}}>{activeHoursPerPr}h</span>
+              </div>
+              <input type="range" min="0.5" max="12" step="0.5" value={activeHoursPerPr} onChange={(e) => setActiveHoursPerPr(e.target.value)} className="vz-range range-emerald" style={{accentColor: 'var(--accent-emerald)'}}/>
+              <p style={{fontSize: '11px', color: 'var(--text-muted)', margin: '15px 0 0 0'}}>Calculates active Spot Instance runtime billing.</p>
+            </div>
+
+            {/* Slider 4: Zegion Strict TTL */}
+            <div className="vz-slider-group full-width">
+              <div className="vz-slider-header">
+                <div className="tooltip-container">
+                  <span style={{color: '#fff'}}>Zegion Strict TTL Teardown Limit (Hours)</span>
+                  <span className="tooltip-icon"><IconInfo /></span>
+                  <span className="tooltip-text"><b>Drives Zegion Storage:</b> To prevent EBS volume waste, Zegion enforces a strict Time-To-Live. After this many hours, the dormant environment is mercilessly destroyed. (Devs can re-provision instantly if needed).</span>
+                </div>
+                <span className="vz-slider-val" style={{color: 'var(--accent-amber)'}}>{strictTtlHours}h</span>
+              </div>
+              <input type="range" min="1" max="48" step="1" value={strictTtlHours} onChange={(e) => setStrictTtlHours(e.target.value)} className="vz-range range-amber" />
+              <p style={{fontSize: '11px', color: 'var(--text-muted)', margin: '15px 0 0 0'}}>Calculates the maximum lifespan of the dormant EBS Storage volume.</p>
+            </div>
+          </div>
+
+{/* --- RESULTS DASHBOARD --- */}
+<div className="calc-results">
+
+  <motion.div
+    className="calc-box"
+    whileHover={{
+      scale: 1.03,
+      y: -6
+    }}
+    transition={{
+      type: "spring",
+      stiffness: 300
+    }}
+  >
+    <div className="calc-box-label tooltip-container metric-header">
+      <DollarSign size={18} />
+
+      <span>Standard CI/CD Cost</span>
+
+      <span className="tooltip-icon">
+        <IconInfo />
+      </span>
+
+      <span className="tooltip-text">
+        Calculated as {prsPerMonth} environments running continuously for {standardLifespanDays} days using On-Demand Compute + EBS Pricing.
+      </span>
+    </div>
+
+    <h3
+      className="calc-money"
+      style={{ color: "var(--accent-red)" }}
+    >
+      ${competitorTotalCost.toFixed(2)}
+    </h3>
+  </motion.div>
+
+  <motion.div
+    className="calc-box"
+    whileHover={{
+      scale: 1.03,
+      y: -6
+    }}
+    transition={{
+      type: "spring",
+      stiffness: 300
+    }}
+  >
+    <div
+      className="calc-box-label tooltip-container metric-header"
+      style={{ cursor: "help" }}
+    >
+      <Cloud size={18} />
+
+      <span>Zegion Ephemeral Cost</span>
+
+      <span className="tooltip-icon">
+        <IconInfo />
+      </span>
+
+      <span className="tooltip-text">
+        <b>The Breakdown:</b>
+        <br />
+        <br />
+        Spot Compute (Active Hrs): $
+        {zegionComputeCost.toFixed(2)}
+        <br />
+        EBS Storage (TTL Hrs): $
+        {zegionEbsCost.toFixed(2)}
+      </span>
+    </div>
+
+    <h3
+      className="calc-money"
+      style={{ color: "var(--accent-cyan)" }}
+    >
+      ${velzionTotalCost.toFixed(2)}
+    </h3>
+  </motion.div>
+
+  <motion.div
+    className="calc-box calc-hero"
+    whileHover={{
+      scale: 1.02
+    }}
+  >
+    <span
+      className="calc-box-label metric-header"
+      style={{
+        color: "var(--accent-emerald)",
+        justifyContent: "center"
+      }}
+    >
+      <TrendingUp size={20} />
+      Total Monthly Savings
+    </span>
+
+    <h2
+      className="calc-money"
+      style={{
+        color: "#fff",
+        fontSize: "48px",
+        margin: "10px 0"
+      }}
+    >
+      ${totalSavings.toFixed(2)}
+
+      <span
+        style={{
+          fontSize: "20px",
+          opacity: 0.8,
+          fontWeight: 500,
+          marginLeft: "12px"
+        }}
+      >
+        ({savingsPercent}%)
+      </span>
+    </h2>
+  </motion.div>
+
+</div>
+
+          {/* --- DETAILED FINOPS AUDIT --- */}
+          <button 
+            className="audit-toggle-btn" 
+            onClick={() => setShowDetailedAudit(!showDetailedAudit)}
+          >
+            {showDetailedAudit ? 'Hide Detailed FinOps Audit' : 'View Detailed Compute & Storage Waste Analysis'}
+          </button>
+          
+          {showDetailedAudit && (
+            <div className="audit-panel">
+              <table className="audit-table">
+                <thead>
+                  <tr>
+                    <th>Billing Line Item</th>
+                    <th>Total Hours Billed</th>
+                    <th>Hourly Rate</th>
+                    <th>Total Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Standard CI/CD Compute (On-Demand 24/7)</td>
+                    <td>{(prsPerMonth * standardPrHours).toLocaleString()} hrs</td>
+                    <td>${odHourly.toFixed(4)}</td>
+                    <td>${standardComputeCost.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td>Standard CI/CD Storage (EBS 24/7)</td>
+                    <td>{(prsPerMonth * standardPrHours).toLocaleString()} hrs</td>
+                    <td>${ebsHourly.toFixed(4)}</td>
+                    <td>${standardEbsCost.toFixed(2)}</td>
+                  </tr>
+                  <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                    <td><b style={{color: 'var(--text-main)'}}>Total Competitor Run Rate</b></td>
+                    <td></td><td></td>
+                    <td><b style={{color: 'var(--accent-red)'}}>${competitorTotalCost.toFixed(2)}</b></td>
+                  </tr>
+                  <tr><td colSpan="4" style={{padding: '8px'}}></td></tr>
+                  <tr>
+                    <td>Zegion Compute (Active Spot Usage)</td>
+                    <td>{zegionTotalActiveHours.toLocaleString()} hrs</td>
+                    <td><span style={{color: 'var(--accent-cyan)'}}>${spotHourly.toFixed(4)}</span></td>
+                    <td>${zegionComputeCost.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td>Zegion Storage (EBS Limited by TTL)</td>
+                    <td>{zegionTotalTtlHours.toLocaleString()} hrs</td>
+                    <td>${ebsHourly.toFixed(4)}</td>
+                    <td>${zegionEbsCost.toFixed(2)}</td>
+                  </tr>
+                  <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                    <td><b style={{color: 'var(--text-main)'}}>Total Zegion Run Rate</b></td>
+                    <td></td><td></td>
+                    <td><b style={{color: 'var(--accent-cyan)'}}>${velzionTotalCost.toFixed(2)}</b></td>
+                  </tr>
+                  <tr><td colSpan="4" style={{padding: '8px'}}></td></tr>
+                  <tr style={{ background: 'rgba(239, 68, 68, 0.1)' }}>
+                    <td colSpan="3" style={{color: 'var(--accent-red)'}}><b>Idle Compute Hours Prevented (Waste vs Actual Use)</b></td>
+                    <td className="audit-highlight">-{idleComputeHoursWasted.toLocaleString()} hrs</td>
+                  </tr>
+                  <tr style={{ background: 'rgba(245, 158, 11, 0.1)' }}>
+                    <td colSpan="3" style={{color: 'var(--accent-amber)'}}><b>Idle Storage Hours Prevented (Waste vs TTL)</b></td>
+                    <td style={{color: 'var(--accent-amber)', fontWeight: 'bold'}}>-{idleStorageHoursWasted.toLocaleString()} hrs</td>
+                  </tr>
+                  <tr style={{ background: 'rgba(16, 185, 129, 0.15)' }}>
+                    <td colSpan="3" style={{color: 'var(--accent-emerald)'}}><b>Total Financial Impact</b></td>
+                    <td className="audit-success">-${totalSavings.toFixed(2)}/mo</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* --- VISUAL BAR CHART --- */}
+          <div className="bar-chart-container">
+            <div className="bar-row">
+              <span className="bar-label" style={{color: 'var(--accent-red)'}}>Standard CI/CD</span>
+              <div className="bar-track">
+                <motion.div
+  className="bar-fill bar-red"
+  initial={{ width: 0 }}
+  animate={{ width: competitorWidth }}
+  transition={{ duration: 1 }}
+/>
+              </div>
+            </div>
+            <div className="bar-row">
+              <div className="bar-label tooltip-container" style={{color: 'var(--accent-cyan)'}}>
+                Zegion Engine <span className="tooltip-icon"><IconInfo /></span>
+                <span className="tooltip-text">Visualizes the cost of Ephemeral Spot Compute + TTL Storage relative to standard pipelines.</span>
+              </div>
+              <div className="bar-track">
+               
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================== */}
+        {/* 8. ARCHITECTURE EVOLUTION CARDS              */}
+        {/* ========================================== */}
+        <div className="arch-section">
+          <h2 className="arch-title">The Evolution of Preview Environments</h2>
+          <p className="arch-subtitle">Why traditional CI/CD pipelines fail at cost optimization.</p>
+          
+          <div className="arch-grid">
+            <div className="arch-card card-legacy">
+              <div className="arch-icon"><IconServer /></div>
+              <h3>1. Legacy Staging</h3>
+              <p>The traditional approach. A dedicated staging server shared by the entire team, running on-demand 24/7 regardless of usage.</p>
+              <div className="arch-feature negative"><span>✗</span> Billed 730 hours per month constantly</div>
+              <div className="arch-feature negative"><span>✗</span> Expensive On-Demand pricing tier</div>
+              <div className="arch-feature negative"><span>✗</span> High risk of merge queue conflicts</div>
+            </div>
+
+            <div className="arch-card card-basic">
+              <div className="arch-icon"><IconCloud /></div>
+              <h3>2. Standard Ephemeral</h3>
+              <p>Modern CI/CD spins up a unique environment for every PR, but abandons them running idle until the PR is merged days later.</p>
+              <div className="arch-feature"><span>✓</span> Isolated testing environment per PR</div>
+              <div className="arch-feature negative"><span>✗</span> Rampant idle cloud waste over weekends</div>
+              <div className="arch-feature negative"><span>✗</span> Often relies on On-Demand nodes</div>
+            </div>
+
+            <div className="arch-card card-optimized" style={{ background: 'linear-gradient(180deg, rgba(0, 229, 255, 0.05) 0%, rgba(18, 20, 24, 0.8) 100%)' }}>
+              <div className="arch-icon" style={{color: 'var(--accent-cyan)'}}><IconRocket /></div>
+              <h3 style={{ color: 'var(--accent-cyan)' }}>3. Zegion Architecture</h3>
+              <p>State-aware infrastructure utilizing Strict TTLs, Spot instances, and intelligent auto-hibernation to eliminate idle burn.</p>
+              <div className="arch-feature"><span>✓</span> <b>60% Spot Discount</b> applied natively</div>
+              <div className="arch-feature"><span>✓</span> <b>Strict TTL:</b> Mercilessly culls dormant EBS</div>
+              <div className="arch-feature"><span>✓</span> <b>ChatOps:</b> <code>/zegion wake</code> via GitHub</div>
+              <div className="arch-feature"><span>✓</span> <b>Self-Healing:</b> Auto-replaces dead Spot nodes</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================== */}
+        {/* 9. ZEGION LIFECYCLE DEEP DIVE                */}
+        {/* ========================================== */}
+        <div className="lifecycle-section">
+          <h3 style={{color: '#fff', fontSize: '24px', marginTop: 0, marginBottom: '32px', textAlign: 'center'}}>Under the Hood: The Aggressive TTL Lifecycle</h3>
+          
+          <div className="lifecycle-step">
+            <div className="step-number">1</div>
+            <div className="step-content">
+              <h4>PR Opened & Webhook Triggered <span className="step-badge">n8n Engine</span></h4>
+              <p>When a developer opens a Pull Request, GitHub fires a webhook to the n8n orchestration engine. n8n dynamically creates a Terraform workspace, provisions a fresh AWS Spot Instance (saving 60% instantly), and posts the live URL back to GitHub.</p>
+            </div>
+          </div>
+
+          <div className="lifecycle-step">
+            <div className="step-number">2</div>
+            <div className="step-content">
+              <h4>State-Aware Idle Hibernation <span className="step-badge">FinOps</span></h4>
+              <p>Once the container finishes building, an invisible 10-minute timer begins. If the developer isn't actively reviewing, a Gatekeeper node verifies the EC2 status via the AWS API. If running, it cleanly hibernates the instance, dropping the Compute Run Rate to $0.00/hr while keeping the EBS disk alive.</p>
+            </div>
+          </div>
+
+          <div className="lifecycle-step">
+            <div className="step-number">3</div>
+            <div className="step-content">
+              <h4>The Strict TTL Enforcement <span className="step-badge">Architecture</span></h4>
+              <p>Rather than letting sleeping EBS disks accumulate costs for days waiting for a merge, Zegion enforces a Strict Time-To-Live. After the designated TTL window expires, n8n executes a ruthless <code>terraform destroy</code>, guaranteeing zero ghost infrastructure is left behind.</p>
+            </div>
+          </div>
+
+          <div className="lifecycle-step">
+            <div className="step-number">4</div>
+            <div className="step-content">
+              <h4>ChatOps Resumption & DX Fallback <span className="step-badge">Resilience</span></h4>
+              <p>If a developer returns the next day to a destroyed PR, they simply type <code>/zegion provision</code> to rebuild the environment from scratch. We trade 3 minutes of Developer Experience (DX) wait time for 98% guaranteed cloud savings.</p>
+            </div>
           </div>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <select 
-                value={currentWorkspace || ''} onChange={(e) => { if (e.target.value) navigate(`/dashboard/${e.target.value}`); }}
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', color: '#fff', padding: '14px 48px 14px 24px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', outline: 'none', appearance: 'none', backdropFilter: 'blur(10px)', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', transition: 'all 0.3s' }}
-              >
-                <option value="" disabled style={{ color: '#000' }}>Select Workspace...</option>
-                {workspaces.map(w => {
-                  const name = typeof w === 'string' ? w : w.full_name;
-                  return <option key={name} value={name} style={{ color: '#000' }}>{name}</option>;
-                })}
-              </select>
-              <ChevronDown size={16} style={{ position: 'absolute', right: '20px', pointerEvents: 'none', color: 'var(--text-muted)' }} />
-            </div>
-
-            <Link to="/finopscalculator" className="vz-btn vz-btn-calc"><BarChart3 size={16} /> ROI</Link>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingRight: '24px', borderRight: '1px solid var(--glass-border)' }}>
-              {user?.avatar ? (
-                <img src={user.avatar} alt="Avatar" style={{ width: '48px', height: '48px', borderRadius: '50%', border: '2px solid var(--accent-cyan)', boxShadow: '0 0 15px var(--accent-cyan-glow)' }} />
-              ) : (
-                <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '2px solid var(--accent-cyan)', background: 'var(--accent-cyan-glow)', color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '18px' }}>
-                  {user?.username?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
-              )}
-              <div>
-                <p style={{ margin: 0, fontWeight: 700, color: '#fff', fontSize: '15px' }}>{user?.username || 'Admin'}</p>
-                <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'var(--accent-emerald)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ width: '8px', height: '8px', background: 'var(--accent-emerald)', borderRadius: '50%', boxShadow: '0 0 10px var(--accent-emerald)', animation: 'pulse 2s infinite' }}></span> Authenticated
-                </p>
-              </div>
-            </div>
-            <button onClick={handleLogout} className="vz-btn" style={{ background: 'transparent', color: 'var(--text-muted)' }}><LogOut size={16} /> Sign Out</button>
-          </div>
-        </motion.div>
-
-        {/* ---------------- THE BLANK SLATE (React Three Fiber Integration) ---------------- */}
-        <AnimatePresence mode="wait">
-          {!currentWorkspace && (
-            <motion.div 
-              key="blank-slate"
-              initial={{ opacity: 0, scale: 0.95, filter: 'blur(20px)' }}
-              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, scale: 0.95, filter: 'blur(20px)' }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="glass-panel"
-              style={{ position: 'relative', height: '65vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', overflow: 'hidden' }}
-            >
-              {/* 🛑 The 3D WebGL Canvas Layer 🛑 */}
-              <div className="canvas-container">
-                <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
-                  <ambientLight intensity={0.5} />
-                  <directionalLight position={[10, 10, 5]} intensity={1} />
-                  <directionalLight position={[-10, -10, -5]} color="#9d4edd" intensity={2} />
-                  <HolographicNode />
-                  <Environment preset="city" />
-                  <ContactShadows position={[0, -2.5, 0]} opacity={0.5} scale={10} blur={2} far={4} />
-                </Canvas>
-              </div>
-
-              {/* UI Layer sitting safely on top of the 3D Canvas */}
-              <div style={{ position: 'relative', zIndex: 2, background: 'rgba(10, 12, 16, 0.4)', padding: '40px 60px', borderRadius: '24px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h2 style={{ fontSize: '42px', color: '#fff', margin: '0 0 16px 0', fontWeight: 900, letterSpacing: '-1px' }}>
-                  Awaiting Coordinates
-                </h2>
-                <p style={{ color: 'var(--text-main)', opacity: 0.8, fontSize: '18px', maxWidth: '500px', lineHeight: '1.6', margin: '0 auto' }}>
-                  The engine is primed. Select a repository workspace from the top navigation to initialize the control plane.
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-{/* ---------------- ENVIRONMENTS TAB & FLEET TELEMETRY ---------------- */}
-        <AnimatePresence mode="wait">
-          {currentWorkspace && activeTab === 'environments' && (
-            <motion.div 
-              key="environments"
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}
-            >
-              {/* SYSTEM ALERTS */}
-              <AnimatePresence>
-                {message && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0, y: -20 }}
-                    animate={{ opacity: 1, height: 'auto', y: 0 }}
-                    exit={{ opacity: 0, height: 0, scale: 0.95 }}
-                    style={{ overflow: 'hidden' }}
-                  >
-                    <div style={{ padding: '16px 24px', background: 'rgba(255, 170, 0, 0.1)', border: '1px solid rgba(255, 170, 0, 0.3)', color: 'var(--accent-amber)', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px', fontWeight: 600, boxShadow: '0 10px 30px rgba(255, 170, 0, 0.1)' }}>
-                      <Loader2 size={20} className="animate-spin" style={{ animation: 'spin 2s linear infinite' }} />
-                      <span style={{ fontSize: '15px' }}>{message}</span>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* FLEET TELEMETRY HUD (Bleeding Edge Addition) */}
-              {(environments || []).length > 0 && (
-                <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} className="glass-panel" style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', borderBottom: '2px solid var(--accent-cyan)' }}>
-                  <div style={{ borderRight: '1px solid var(--glass-border)' }}>
-                    <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Active Nodes</p>
-                    <p style={{ margin: 0, fontSize: '32px', fontWeight: 900, color: '#fff', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <Activity size={24} color="var(--accent-cyan)" /> {(environments || []).filter(e => e.status === 'RUNNING').length}
-                    </p>
-                  </div>
-                  <div style={{ borderRight: '1px solid var(--glass-border)' }}>
-                    <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Sleeping PRs</p>
-                    <p style={{ margin: 0, fontSize: '32px', fontWeight: 900, color: 'var(--accent-purple)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <PauseCircle size={24} /> {(environments || []).filter(e => e.status === 'SLEEPING').length}
-                    </p>
-                  </div>
-                  <div>
-                    <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Network Health</p>
-                    <p style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--accent-emerald)', display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
-                      <span style={{ display: 'inline-block', width: '12px', height: '12px', background: 'var(--accent-emerald)', borderRadius: '50%', boxShadow: '0 0 15px var(--accent-emerald-glow)' }}></span> Optimal
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* DYNAMIC ENVIRONMENT CARDS */}
-              <div className="vz-env-list" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                {!(environments || []).length ? (
-                  <motion.div variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', damping: 20 } } }} className="glass-panel" style={{ textAlign: 'center', padding: '100px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}>
-                      <Server size={80} color="rgba(255,255,255,0.05)" style={{ marginBottom: '24px' }} />
-                    </motion.div>
-                    <h3 style={{ color: '#fff', margin: '0 0 16px 0', fontSize: '28px', fontWeight: 900, letterSpacing: '-0.5px' }}>Infrastructure Offline</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '16px', margin: 0, maxWidth: '450px', lineHeight: '1.7' }}>
-                      The orchestration engine is standing by. Open a Pull Request on <strong style={{ color: 'var(--accent-cyan)' }}>{currentWorkspace}</strong> to provision an isolated cloud environment.
-                    </p>
-                  </motion.div>
-                ) : (
-                  (environments || []).map((env) => {
-                    const stats = calculateFinOps(env);
-                    let statusColor = "var(--text-muted)"; let bgGlow = "transparent"; let StatusIcon = Activity;
-
-                    if (env.status === 'RUNNING') { statusColor = "var(--accent-emerald)"; bgGlow = "rgba(0, 255, 157, 0.05)"; StatusIcon = Play; }
-                    else if (env.status === 'SLEEPING') { statusColor = "var(--accent-purple)"; bgGlow = "rgba(157, 78, 221, 0.05)"; StatusIcon = PauseCircle; }
-                    else if (env.status === 'PROVISIONING' || env.status === 'DESTROYING...') { statusColor = "var(--accent-amber)"; bgGlow = "rgba(255, 170, 0, 0.05)"; StatusIcon = Loader2; }
-                    else if (env.status === 'DESTROYED') { StatusIcon = Trash2; }
-
-                    return (
-                      <motion.div key={env.id} layout variants={{ hidden: { opacity: 0, y: 40, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 100, damping: 15 } } }} className="glass-panel vz-env-card" style={{ background: `linear-gradient(145deg, var(--bg-surface), ${bgGlow})`, borderLeft: `4px solid ${statusColor}` }}>
-                        <div style={{ padding: '32px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
-                            <div>
-                              <h3 style={{ display: 'flex', alignItems: 'center', gap: '16px', margin: '0 0 12px 0', fontSize: '32px', fontWeight: 900, letterSpacing: '-1px' }}>
-                                <span style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '8px' }}>Pull Request</span> 
-                                #{env.pr_number}
-                              </h3>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '15px' }}>
-                                {env.status === 'DESTROYED' ? <span style={{ color: 'var(--text-muted)' }}>Architecture terminated. Security groups dismantled.</span> : 
-                                 env.status === 'DESTROYING...' ? <span style={{ color: 'var(--accent-amber)', display: 'flex', alignItems: 'center', gap: '8px' }}><Loader2 size={16} className="animate-spin"/> Evacuating instances...</span> : 
-                                 env.status === 'PROVISIONING' ? <span style={{ color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', gap: '8px' }}><Loader2 size={16} className="animate-spin"/> Compiling Terraform State...</span> : 
-                                 env.status === 'SLEEPING' ? <span style={{ color: 'var(--accent-purple)' }}>Resources frozen to disk. Billing paused.</span> : 
-                                 env.dns_prefix ? (
-                                  <span style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#fff' }}>
-                                    External Endpoint: 
-                                    <a href={env.dns_prefix} target="_blank" rel="noreferrer" style={{ color: '#000', background: 'var(--accent-cyan)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 16px', borderRadius: '8px', fontWeight: 800, fontSize: '13px', transition: 'all 0.3s', boxShadow: '0 0 15px var(--accent-cyan-glow)' }}>
-                                      {env.dns_prefix} <ExternalLink size={14} />
-                                    </a>
-                                  </span>
-                                 ) : <span style={{ color: 'var(--text-muted)' }}>Awaiting DNS Propagation...</span>}
-                              </div>
-                            </div>
-                            
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 20px', borderRadius: '12px', fontWeight: 800, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1.5px', color: statusColor, background: 'rgba(255,255,255,0.03)', border: `1px solid ${statusColor}`, boxShadow: `inset 0 0 20px ${statusColor}20` }}>
-                              <StatusIcon size={18} className={env.status.includes('ING') ? 'animate-spin' : ''} />
-                              {env.status}
-                            </span>
-                          </div>
-
-                          {/* FINOPS WIDGET WITH FRAMER MOTION LAYOUT */}
-                          <AnimatePresence>
-                            {stats && (
-                              <motion.div layout initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ overflow: 'hidden' }}>
-                                <div style={{ background: stats.isFrozen ? 'rgba(157, 78, 221, 0.05)' : 'rgba(0,0,0,0.5)', border: stats.isFrozen ? '1px dashed rgba(157, 78, 221, 0.3)' : '1px solid var(--glass-border)', borderRadius: '16px', padding: '24px', marginTop: '24px' }}>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '1.5px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                      <BarChart3 size={16} color="var(--accent-emerald)" />
-                                      {env.status === 'DESTROYED' ? 'Final FinOps Receipt' : 'Real-Time Telemetry'}
-                                      {stats.isFrozen && env.status !== 'DESTROYED' && <span style={{ color: 'var(--accent-purple)', background: 'rgba(157, 78, 221, 0.15)', padding: '4px 10px', borderRadius: '6px', fontSize: '11px' }}>⏸ Paused</span>}
-                                    </p>
-                                    <span style={{ background: 'rgba(0, 255, 157, 0.1)', border: '1px solid rgba(0, 255, 157, 0.3)', color: 'var(--accent-emerald)', padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 800, boxShadow: '0 0 10px var(--accent-emerald-glow)' }}>
-                                      {stats.savingsPercent}% Spot Optimization
-                                    </span>
-                                  </div>
-                                  
-                                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
-                                    <div><p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', fontWeight: 700 }}>Uptime</p><p style={{ margin: 0, fontSize: '28px', fontWeight: 800, fontFamily: 'var(--font-mono)', color: stats.isFrozen ? 'var(--text-muted)' : '#fff' }}>{stats.uptimeString}</p></div>
-                                    <div><p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', fontWeight: 700 }}>Spot Rate</p><p style={{ margin: 0, fontSize: '28px', fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--accent-cyan)', textShadow: '0 0 20px var(--accent-cyan-glow)' }}>${stats.spotCost}</p></div>
-                                    <div><p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', fontWeight: 700 }}>On-Demand</p><p style={{ margin: 0, fontSize: '28px', fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#4b5563', textDecoration: 'line-through' }}>${stats.odCost}</p></div>
-                                    <div><p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', fontWeight: 700 }}>Capital Saved</p><p style={{ margin: 0, fontSize: '28px', fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--accent-emerald)' }}>+${stats.savings}</p></div>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                          
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '32px', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                            <p style={{ margin: 0, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.5)', padding: '8px 16px', borderRadius: '8px' }}>
-                              <Server size={14} /> EC2_ID: <span style={{ color: '#fff' }}>{env.instance_id || 'PENDING_ALLOCATION'}</span>
-                            </p>
-                            {(env.status === 'RUNNING' || env.status === 'SLEEPING') && (
-                              <button 
-                                onClick={() => handleDestroy(env)} disabled={isPipelineBusy} 
-                                style={{ background: 'transparent', color: 'var(--accent-rose)', border: '1px solid rgba(255, 0, 85, 0.3)', padding: '14px 28px', borderRadius: '12px', cursor: isPipelineBusy ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 800, transition: 'all 0.3s', opacity: isPipelineBusy ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '8px' }}
-                                onMouseEnter={(e) => { if(!isPipelineBusy) { e.currentTarget.style.background = 'rgba(255, 0, 85, 0.1)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(255, 0, 85, 0.2)'; }}}
-                                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.boxShadow = 'none'; }}
-                              >
-                                <Trash2 size={16} /> Terminate Architecture
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ---------------- IAM SETTINGS TAB & ARCHITECTURE VISUAL ---------------- */}
-        <AnimatePresence mode="wait">
-          {currentWorkspace && activeTab === 'iam' && (
-            <motion.div 
-              key="iam"
-              initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -30 }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="glass-panel" style={{ padding: '56px', borderRadius: '24px' }}
-            >
-              <h2 style={{ marginTop: 0, color: '#fff', fontSize: '36px', marginBottom: '16px', fontWeight: 900, letterSpacing: '-1px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <Shield size={40} color="var(--accent-purple)" style={{ filter: 'drop-shadow(0 0 10px var(--accent-purple-glow))' }} /> Security & IAM Bindings
-              </h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '18px', marginBottom: '48px', lineHeight: '1.7', maxWidth: '800px' }}>
-                Deploying infrastructure requires authorization. Grant the Velzion Engine secure, temporary access to provision environments in your AWS account using a keyless AssumeRole architecture.
-              </p>
-
-              {/* ARCHITECTURE DIAGRAM (Pure HTML/CSS) */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.3)', padding: '32px 48px', borderRadius: '16px', border: '1px dashed rgba(157, 78, 221, 0.3)', marginBottom: '48px' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'rgba(0, 240, 255, 0.1)', border: '2px solid var(--accent-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto' }}><CloudCog size={32} color="var(--accent-cyan)" /></div>
-                  <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#fff' }}>Velzion Engine</p>
-                </div>
-                <div style={{ flex: 1, height: '2px', background: 'linear-gradient(90deg, var(--accent-cyan), var(--accent-purple))', margin: '0 24px', position: 'relative' }}>
-                  <motion.div animate={{ x: ['0%', '100%'] }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }} style={{ position: 'absolute', top: '-4px', left: 0, width: '10px', height: '10px', background: '#fff', borderRadius: '50%', boxShadow: '0 0 10px #fff' }} />
-                  <p style={{ position: 'absolute', top: '-24px', left: '50%', transform: 'translateX(-50%)', margin: 0, fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 800 }}>AssumeRole (STS)</p>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'rgba(157, 78, 221, 0.1)', border: '2px solid var(--accent-purple)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto' }}><Server size={32} color="var(--accent-purple)" /></div>
-                  <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#fff' }}>Your AWS VPC</p>
-                </div>
-              </div>
-
-              {/* STEP 1 */}
-              <div style={{ backgroundColor: 'rgba(0,0,0,0.4)', padding: '40px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '32px', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--accent-cyan)' }}></div>
-                <h4 style={{ margin: '0 0 16px 0', color: '#fff', fontSize: '22px', display: 'flex', alignItems: 'center', gap: '16px', fontWeight: 800 }}>
-                  <span style={{ background: 'var(--accent-cyan)', color: '#000', padding: '6px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: 900 }}>STEP 1</span> Deploy Trust Policy
-                </h4>
-                <p style={{ color: 'var(--text-muted)', fontSize: '16px', marginBottom: '32px', lineHeight: '1.7', maxWidth: '700px' }}>
-                  Launch our verified CloudFormation template. This provisions a secure <code style={{ color: 'var(--accent-cyan)', background: 'rgba(0, 240, 255, 0.1)', padding: '4px 10px', borderRadius: '6px', fontFamily: 'var(--font-mono)' }}>VelzionExecutionRole</code> with strict least-privilege access tied exclusively to your repository infrastructure.
-                </p>
-                <a href={cfnLink} target="_blank" rel="noreferrer" style={{ background: '#fff', color: '#000', padding: '16px 32px', borderRadius: '12px', fontWeight: 900, fontSize: '15px', display: 'inline-flex', alignItems: 'center', gap: '12px', textDecoration: 'none', transition: 'all 0.3s', boxShadow: '0 10px 20px rgba(255,255,255,0.1)' }}>
-                  Launch AWS CloudFormation <ExternalLink size={18} />
-                </a>
-              </div>
-
-              {/* STEP 2 */}
-              <div style={{ backgroundColor: 'rgba(0,0,0,0.4)', padding: '40px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--accent-purple)' }}></div>
-                <h4 style={{ margin: '0 0 24px 0', color: '#fff', fontSize: '22px', display: 'flex', alignItems: 'center', gap: '16px', fontWeight: 800 }}>
-                  <span style={{ background: 'var(--accent-purple)', color: '#fff', padding: '6px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: 900 }}>STEP 2</span> Bind Credentials
-                </h4>
-                
-                <form onSubmit={handleSaveIntegration} style={{ display: 'grid', gap: '32px' }}>
-                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '24px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: 'var(--text-muted)', fontSize: '15px', fontWeight: 600 }}>Targeting Workspace:</span>
-                    <span style={{ color: '#fff', fontFamily: 'var(--font-mono)', fontSize: '18px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <CloudCog size={20} color="var(--accent-cyan)" /> {currentWorkspace}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <label style={{ fontSize: '15px', color: 'var(--text-muted)', fontWeight: 700 }}>Assumed AWS Role ARN (Output from Step 1)</label>
-                    <input 
-                      type="text" value={iamRoleArn} onChange={(e) => setIamRoleArn(e.target.value)} 
-                      placeholder="arn:aws:iam::123456789012:role/VelzionExecutionRole" required 
-                      style={{ background: 'rgba(0,0,0,0.6)', border: '2px solid rgba(255,255,255,0.05)', color: '#fff', padding: '20px 24px', borderRadius: '14px', outline: 'none', width: '100%', boxSizing: 'border-box', fontSize: '16px', fontFamily: 'var(--font-mono)', transition: 'all 0.3s' }}
-                      onFocus={(e) => { e.target.style.borderColor = 'var(--accent-purple)'; e.target.style.boxShadow = '0 0 25px var(--accent-purple-glow)'; }}
-                      onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.05)'; e.target.style.boxShadow = 'none'; }}
-                    />
-                  </div>
-                  
-                  <button type="submit" disabled={iamStatus === 'saving'} style={{ background: 'var(--accent-purple)', color: '#fff', padding: '18px 36px', borderRadius: '14px', width: 'fit-content', fontSize: '16px', fontWeight: 900, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', opacity: iamStatus === 'saving' ? 0.7 : 1, transition: 'all 0.3s' }}>
-                    {iamStatus === 'saving' ? <><Loader2 size={20} className="animate-spin" /> Establishing Trust Link...</> : <><Shield size={20} /> Secure Integration</>}
-                  </button>
-                </form>
-
-                <AnimatePresence>
-                  {iamStatus === 'success' && (
-                    <motion.div initial={{ opacity: 0, y: 10, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0 }} style={{ marginTop: '32px', padding: '20px 24px', borderRadius: '14px', color: 'var(--accent-emerald)', border: '1px solid rgba(0, 255, 157, 0.3)', backgroundColor: 'rgba(0, 255, 157, 0.05)', display: 'flex', alignItems: 'center', gap: '16px', fontWeight: 700 }}>
-                      <Shield size={24} /> Cryptographic handshake complete. Engine is authorized.
-                    </motion.div>
-                  )}
-                  {iamStatus === 'error' && (
-                    <motion.div initial={{ opacity: 0, y: 10, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0 }} style={{ marginTop: '32px', padding: '20px 24px', borderRadius: '14px', color: 'var(--accent-rose)', border: '1px solid rgba(255, 0, 85, 0.3)', backgroundColor: 'rgba(255, 0, 85, 0.05)', display: 'flex', alignItems: 'center', gap: '16px', fontWeight: 700 }}>
-                      <Server size={24} /> Binding failed. Validate the ARN syntax and ensure the CFN stack deployed successfully.
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        </div>
 
       </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default FinOpsCalculator;

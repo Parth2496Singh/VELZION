@@ -62,7 +62,7 @@ class GitHubCallbackView(APIView):
 
         login(request, user)
 
-        #  NEW: Fetch all workspaces (repos) this user has access to
+        # 🔥 Fetch all workspaces (repos) this user has access to
         repos_list = []
         try:
             repos_response = requests.get(
@@ -72,11 +72,14 @@ class GitHubCallbackView(APIView):
             )
             if repos_response.status_code == 200:
                 repos_data = repos_response.json()
-                # Extract only the "owner/repo" string (e.g., 'velzatron/velzion-frontend')
                 repos_list = [repo['full_name'] for repo in repos_data]
+                
+                # 🛑 THE FIREWALL UPDATE: Save their clearance list directly into the database
+                user.allowed_repos = repos_list
+                user.save()
+                
         except Exception as e:
             print(f"Warning: Failed to fetch repositories during login: {e}")
-
         # 4. Return user profile AND the workspace list to React
         return Response({
             "message": "Login successful",

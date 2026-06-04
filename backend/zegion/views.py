@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.conf import settings
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes, action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -37,23 +37,32 @@ class ProjectViewSet(viewsets.ModelViewSet):
 class EphemeralEnvironmentViewSet(viewsets.ModelViewSet):
     serializer_class = EphemeralEnvironmentSerializer
 
-    # 🔥 NEW: The Data Isolation Filter 🔥
+    # 🔥 SECURITY LOCK: Only logged-in users can hit this endpoint
+    permission_classes = [IsAuthenticated]
+
     def get_queryset(self):
-        """
-        Intercepts the GET request from React and filters the database
-        to strictly return environments for the active workspace.
-        """
+        user = self.request.user
         workspace_query = self.request.query_params.get('repo')
         
-        if workspace_query:
-            # 🔥 THE FIX: Use __icontains directly on the workspace string (e.g., "parth/test-repo")
-            # This ignores capital letters and ignores the "https://github.com/" and ".git" parts!
-            return EphemeralEnvironment.objects.filter(
-                project__github_repo_url__icontains=workspace_query
-            ).order_by('-created_at')
+        # 1. If no workspace is requested, or user is anonymous, reject immediately
+        if not workspace_query or not user.is_authenticated:
+            return EphemeralEnvironment.objects.none()
             
-        # If no workspace is selected, return an empty list for the Blank Slate UI
-        return EphemeralEnvironment.objects.none()
+        # 2. THE FIREWALL: Check if the requested workspace is in their database clearance list
+        # (We use .lower() to ensure capitalization differences don't block legitimate access)
+        is_authorized = any(
+            workspace_query.lower() == authorized_repo.lower() 
+            for authorized_repo in user.allowed_repos
+        )
+        
+        # 3. If they try to request a repo they don't own, return an empty list
+        if not is_authorized:
+            return EphemeralEnvironment.objects.none()
+
+        # 4. If they pass the firewall, run the fuzzy search safely!
+        return EphemeralEnvironment.objects.filter(
+            project__github_repo_url__icontains=workspace_query
+        ).order_by('-created_at')
 
 
     # 🔥 FRONTEND UI OVERRIDE TERMINATION HOOK 🔥 (Preserved exactly as you had it)
