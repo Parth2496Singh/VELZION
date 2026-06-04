@@ -12,33 +12,37 @@ const AuthCallback = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState("Authenticating with GitHub...");
   
-  // 1. Create a persistent lock that survives React's double-renders
   const hasFetched = useRef(false);
 
   useEffect(() => {
     const code = searchParams.get('code');
     
-    // 2. Only proceed if we have a code AND the lock is false
     if (code && !hasFetched.current) {
-      
-      // 3. Instantly snap the lock shut!
       hasFetched.current = true; 
       
       axios.post(`${API_URL}/callback/`, { code })
         .then(response => {
-          setStatus("Authentication successful! Redirecting...");
+          setStatus("Authentication successful! Loading your workspaces...");
           
-          // 1. Log the exact payload so we can see what Django sent
           console.log("🔥 DJANGO RESPONSE:", response.data);
           
-          // 2. Dynamically grab the user data, whether it's nested or at the root
           const userData = response.data.user || response.data;
           
-          // 3. Save it cleanly
-          localStorage.setItem('velzion_user', JSON.stringify(userData));
+          // 🛡️ NEW: Grab the repositories list Django fetched from GitHub
+          // Fallback to empty array if backend hasn't implemented it yet
+          const userRepos = response.data.repos || []; 
           
+          localStorage.setItem('velzion_user', JSON.stringify(userData));
+          localStorage.setItem('velzion_repos', JSON.stringify(userRepos)); // Save accessible workspaces
+          
+          // Redirect to the clean Blank Slate dashboard
           setTimeout(() => navigate('/dashboard'), 1000);
         })
+        .catch(err => {
+            console.error("Auth Error:", err);
+            setStatus("Authentication failed. Please try again.");
+            setTimeout(() => navigate('/login'), 2000);
+        });
     } else if (!code) {
       setStatus("No authorization code found.");
       setTimeout(() => navigate('/login'), 2000);
@@ -46,8 +50,9 @@ const AuthCallback = () => {
   }, [searchParams, navigate]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
-      <div className="text-xl font-semibold animate-pulse">
+    <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: '#050505', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
+      <div className="text-xl font-semibold" style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>
+        <span style={{ fontSize: '24px', marginRight: '12px' }}>⚡</span>
         {status}
       </div>
     </div>

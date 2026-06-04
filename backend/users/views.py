@@ -17,14 +17,14 @@ class GitHubLoginURLView(APIView):
         return Response({"login_url": url})
 
 class GitHubCallbackView(APIView):
-    # NEW: Drop the CSRF and Auth shields for this specific endpoint
+    # Drop the CSRF and Auth shields for this specific endpoint
     authentication_classes = [] 
     permission_classes = [AllowAny] 
 
     def post(self, request):
         code = request.data.get('code')
         
-        # Exchange code for access token
+        # 1. Exchange code for access token
         token_response = requests.post(
             'https://github.com/login/oauth/access_token',
             headers={'Accept': 'application/json'},
@@ -39,14 +39,14 @@ class GitHubCallbackView(APIView):
         if not access_token:
             return Response({"error": "Failed to get access token"}, status=400)
 
-        # Get GitHub profile
+        # 2. Get GitHub profile
         user_response = requests.get(
             'https://api.github.com/user',
             headers={'Authorization': f'Bearer {access_token}'}
         )
         github_user = user_response.json()
 
-        # Create or Log in user
+        # 3. Create or Log in user
         user, created = UserProfile.objects.get_or_create(
             github_id=github_user['id'],
             defaults={
@@ -62,8 +62,27 @@ class GitHubCallbackView(APIView):
 
         login(request, user)
 
+        #  NEW: Fetch all workspaces (repos) this user has access to
+        repos_list = []
+        try:
+            repos_response = requests.get(
+                'https://api.github.com/user/repos?affiliation=owner,collaborator,organization_member&per_page=100',
+                headers={'Authorization': f'Bearer {access_token}'},
+                timeout=5
+            )
+            if repos_response.status_code == 200:
+                repos_data = repos_response.json()
+                # Extract only the "owner/repo" string (e.g., 'velzatron/velzion-frontend')
+                repos_list = [repo['full_name'] for repo in repos_data]
+        except Exception as e:
+            print(f"Warning: Failed to fetch repositories during login: {e}")
+
+        # 4. Return user profile AND the workspace list to React
         return Response({
             "message": "Login successful",
-            "username": user.username,
-            "avatar": user.avatar_url
+            "user": {
+                "username": user.username,
+                "avatar": user.avatar_url
+            },
+            "repos": repos_list
         })

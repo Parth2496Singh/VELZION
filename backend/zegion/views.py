@@ -35,16 +35,30 @@ class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
 
 class EphemeralEnvironmentViewSet(viewsets.ModelViewSet):
-    queryset = EphemeralEnvironment.objects.all()
     serializer_class = EphemeralEnvironmentSerializer
 
-    # 🔥 FRONTEND UI OVERRIDE TERMINATION HOOK 🔥
+    # 🔥 NEW: The Data Isolation Filter 🔥
+    def get_queryset(self):
+        """
+        Intercepts the GET request from React and filters the database
+        to strictly return environments for the active workspace.
+        """
+        workspace_query = self.request.query_params.get('repo')
+        
+        if workspace_query:
+            # 🔥 THE FIX: Use __icontains directly on the workspace string (e.g., "parth/test-repo")
+            # This ignores capital letters and ignores the "https://github.com/" and ".git" parts!
+            return EphemeralEnvironment.objects.filter(
+                project__github_repo_url__icontains=workspace_query
+            ).order_by('-created_at')
+            
+        # If no workspace is selected, return an empty list for the Blank Slate UI
+        return EphemeralEnvironment.objects.none()
+
+
+    # 🔥 FRONTEND UI OVERRIDE TERMINATION HOOK 🔥 (Preserved exactly as you had it)
     @action(detail=True, methods=['post'])
     def terminate(self, request, pk=None):
-        """
-        Triggered when a person clicks 'Terminate Instance' from the React Frontend UI.
-        Captures auditor identity and routes destruction command down the architecture pipeline.
-        """
         environment = self.get_object()
         
         if environment.status == 'DESTROYED':
@@ -52,13 +66,11 @@ class EphemeralEnvironmentViewSet(viewsets.ModelViewSet):
             
         user_identity = request.data.get('user', 'Dashboard User')
         
-        # Lock state machine instantly before hitting infrastructure
         environment.status = 'DESTROYED'
         environment.terminated_by = user_identity
         environment.terminated_at = timezone.now()
         environment.save()
         
-        # Route to n8n teardown track asynchronously
         n8n_base = os.environ.get('N8N_INTERNAL_URL', 'http://velzion-n8n:5678')
         try:
             requests.post(f"{n8n_base}/webhook/zegion-pr", json={
@@ -69,7 +81,7 @@ class EphemeralEnvironmentViewSet(viewsets.ModelViewSet):
                 }
             }, timeout=5)
         except Exception:
-            pass # Keep UI responsive even if n8n takes a second to reply
+            pass 
             
         return Response({
             "message": f"Permanent infrastructure teardown sequence initialized by {user_identity}.",

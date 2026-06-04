@@ -5,7 +5,7 @@ from .views import ProjectViewSet, EphemeralEnvironmentViewSet, github_webhook, 
 # Auto-generate standard REST routes
 router = DefaultRouter()
 router.register(r'projects', ProjectViewSet)
-router.register(r'environments', EphemeralEnvironmentViewSet)
+router.register(r'environments', EphemeralEnvironmentViewSet, basename='environment')
 
 urlpatterns = [
     # This includes all the router-generated URLs
