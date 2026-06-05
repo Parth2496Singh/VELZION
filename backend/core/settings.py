@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     'zegion',
     'corsheaders',
     'users',
+    'velzard',
 ]
 
 MIDDLEWARE = [

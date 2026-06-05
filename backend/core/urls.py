@@ -21,6 +21,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # 1. SPECIFIC ROUTE MUST GO FIRST:
     path('api/auth/', include('users.urls')),
-    # 2. GENERAL ROUTE GOES SECOND:
+    # 2. VELZARD ROUTES
+    path('api/velzard/', include('velzard.urls')),
+    # 3. GENERAL ROUTE GOES THIRD:
     path('api/', include('zegion.urls')), 
+    
 ]

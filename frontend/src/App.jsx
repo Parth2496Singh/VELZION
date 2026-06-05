@@ -5,6 +5,8 @@ import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
 import FinOpsCalculator from './pages/FinOpsCalculator';
+// App.jsx
+import Production from './pages/Production';
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
         <Route path="/dashboard/:owner/:repo" element={<Dashboard />} />
         
         <Route path="/finopscalculator" element={<FinOpsCalculator />} />
+
+        <Route path="/production" element={<Production />} />
       </Routes>
     </BrowserRouter>
   );
