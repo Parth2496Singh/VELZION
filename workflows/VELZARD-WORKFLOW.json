@@ -1,0 +1,191 @@
+{
+  "name": "Velzard Orchestration (Production Engine)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "velzard-deploy",
+        "options": {}
+      },
+      "id": "6f288b77-8641-4b98-b6a8-1303913e9483",
+      "name": "Webhook (Deploy Trigger)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        112
+      ],
+      "webhookId": "velzard-deploy-webhook-id"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.body.action }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "deploy"
+            },
+            {
+              "value2": "destroy",
+              "output": 1
+            }
+          ]
+        }
+      },
+      "id": "c84f025d-1236-4cf3-8ad3-f9f0398d1adf",
+      "name": "Route Action Target",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "command": "=# 1. Create Isolation Workspace\nPROD_DIR=\"/home/node/terraform/velzard_${{ $('Webhook (Deploy Trigger)').first().json.body.deployment_id }}\"\nmkdir -p $PROD_DIR\ncp /home/node/terraform/velzard_main.tf $PROD_DIR/main.tf\ncd $PROD_DIR\n\n# 2. Deploy Infrastructure via explicit Variable Injection\nterraform init > /dev/null\nterraform apply -var=\"repo_url={{ $('Webhook (Deploy Trigger)').first().json.body.repo_full_name }}\" -var=\"branch={{ $('Webhook (Deploy Trigger)').first().json.body.branch }}\" -var=\"deployment_id={{ $('Webhook (Deploy Trigger)').first().json.body.deployment_id }}\" -auto-approve > /dev/null\n\n# 3. Secure Output Artifacts (FIXED JSON EXTRACTION)\nterraform output -json > tf_out.json\ncat tf_out.json"
+      },
+      "id": "76fc352b-721b-4252-80cc-d312fb01ad5a",
+      "name": "Deploy Velzard EC2",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=http://54.86.145.100/api/velzard/deployments/{{ $('Webhook (Deploy Trigger)').first().json.body.deployment_id }}/webhook_update/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-velzion-secret",
+              "value": "L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"aws_instance_id\": \"{{ JSON.parse($('Deploy Velzard EC2').first().json.stdout).instance_id.value }}\",\n  \"elastic_ip\": \"{{ JSON.parse($('Deploy Velzard EC2').first().json.stdout).public_ip.value }}\"\n}",
+        "options": {}
+      },
+      "id": "1ecee330-9510-40cd-9d65-04956ee07de4",
+      "name": "Link Infrastructure Metadata",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        256,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "command": "=# 1. Target Infrastructure Path\nPROD_DIR=\"/home/node/terraform/velzard_${{ $('Webhook (Deploy Trigger)').first().json.body.deployment_id }}\"\ncd $PROD_DIR\n\n# 2. Attempt clean destruction (🚀 FIXED: Using real injected variables)\nterraform destroy -var=\"repo_url={{ $('Webhook (Deploy Trigger)').first().json.body.repo_full_name }}\" -var=\"branch={{ $('Webhook (Deploy Trigger)').first().json.body.branch }}\" -var=\"deployment_id={{ $('Webhook (Deploy Trigger)').first().json.body.deployment_id }}\" -auto-approve > /dev/null\n\n# 3. SAFETY NET: Release orphaned Elastic IPs\naws ec2 describe-addresses --filters \"Name=tag:Name,Values=velzard-production-node\" --query 'Addresses[?AssociationId==null].AllocationId' --output text | xargs -r -n 1 aws ec2 release-address --allocation-id || true\n\n# 4. Wipe working directory\ncd ..\nrm -rf $PROD_DIR"
+      },
+      "id": "95aada9a-a395-4d6b-811e-81af28a2e057",
+      "name": "Teardown Infrastructure Node",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        0,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=http://54.86.145.100/api/velzard/deployments/{{ $('Webhook (Deploy Trigger)').first().json.body.deployment_id }}/webhook_update/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-velzion-secret",
+              "value": "L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"status\": \"DESTROYED\"\n}",
+        "options": {}
+      },
+      "id": "c7458fbb-4e55-4275-97ab-71dad82e56ad",
+      "name": "Mark Deployment Destroyed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        256,
+        256
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook (Deploy Trigger)": {
+      "main": [
+        [
+          {
+            "node": "Route Action Target",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Action Target": {
+      "main": [
+        [
+          {
+            "node": "Deploy Velzard EC2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Teardown Infrastructure Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deploy Velzard EC2": {
+      "main": [
+        [
+          {
+            "node": "Link Infrastructure Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Teardown Infrastructure Node": {
+      "main": [
+        [
+          {
+            "node": "Mark Deployment Destroyed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4a6f53e8-4869-4764-bd82-e52d15ce6552",
+  "meta": {
+    "instanceId": "1cb29f4e098cb2f50947765c80a4fb4db32b4b77f643a5ca0cd9995d4ba2c5a6"
+  },
+  "id": "CJ5c3E2CecDy7ggw",
+  "tags": []
+}
