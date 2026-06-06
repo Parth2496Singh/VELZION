@@ -47,7 +47,7 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
 
 # SPOT INSTANCES!
 resource "aws_spot_instance_request" "zegion_preview" {
-  ami                    = "ami-032712f546eba341c" # Ubuntu 24.04 LTS
+  ami                    = "ami-04900bc2bfac97d75" # Ubuntu 24.04 LTS
   instance_type          = "t3.micro"
   spot_price             = "0.01"
   wait_for_fulfillment   = true
@@ -67,39 +67,21 @@ resource "aws_spot_instance_request" "zegion_preview" {
               exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
               export HOME=/root
               
-              apt-get remove -y docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc || true
-              apt-get autoremove -y || true
-
-              apt-get update -y
-              apt-get install -y ca-certificates curl gnupg git
-
-              install -m 0755 -d /etc/apt/keyrings
-              rm -f /etc/apt/keyrings/docker.gpg
-              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg
-              chmod a+r /etc/apt/keyrings/docker.gpg
-
-              echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-              $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-              apt-get update -y
-              apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-              systemctl enable docker
-              systemctl start docker
-              usermod -aG docker ubuntu
-                              
-              curl -sSL "https://github.com/buildpacks/pack/releases/download/v0.40.6/pack-v0.40.6-linux.tgz" | tar -C /usr/local/bin/ --no-same-owner -xzv pack
-                              
+              # 1. Clone the repo
               git clone ${var.repo_url} /app
               cd /app
                               
+              # 2. Fetch the specific PR branch
               git fetch origin pull/${var.pr_number}/head:pr-preview
               git checkout pr-preview
 
+              # 3. Build using pre-installed Pack (Images are already on disk!)
               pack build zegion-app --builder paketobuildpacks/builder-jammy-base
                               
+              # 4. Run using pre-installed Docker
               docker run -d -p 80:8080 --name zegion-web --restart unless-stopped zegion-app
-              # This fires the exact millisecond the build finishes to trigger auto-hibernation.
+
+              # 5. Send Webhook
               curl -X POST http://54.86.145.100/api/webhooks/github/ \
                 -H "x-velzion-secret: L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA" \
                 -H "Content-Type: application/json" \
