@@ -1,0 +1,521 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+
+const FinOpsCalculator = () => {
+  // ==========================================
+  // 1. AUTHENTICATION & ROUTING STATE
+  // ==========================================
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('velzion_user');
+    if (storedUser) {
+      try { 
+        setUser(JSON.parse(storedUser)); 
+      } catch (e) { 
+        console.error("Auth parse error"); 
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('velzion_user');
+    navigate('/login');
+  };
+
+  // ==========================================
+  // 2. THE 4-SLIDER "AGGRESSIVE TTL" STATE
+  // ==========================================
+  const [prsPerMonth, setPrsPerMonth] = useState(100);
+  const [standardLifespanDays, setStandardLifespanDays] = useState(4); // Drives Competitor Cost
+  const [activeHoursPerPr, setActiveHoursPerPr] = useState(2);         // Drives Zegion Spot Compute
+  const [strictTtlHours, setStrictTtlHours] = useState(4);             // Drives Zegion EBS Storage
+
+  const [showDetailedAudit, setShowDetailedAudit] = useState(false);
+
+  // ==========================================
+  // 3. BULLETPROOF FINOPS MATH
+  // ==========================================
+  // Base AWS Pricing (us-east-1)
+  const odHourly = 0.0104;   // t3.micro On-Demand Compute
+  const spotHourly = 0.0043; // t3.micro Spot Compute
+  const ebsHourly = 0.0022;  // 20GB gp3 Volume ($0.08/GB/mo)
+
+  // -- 1. Standard CI/CD Math (The Competitor) --
+  // Standard CI/CD spins up an On-Demand server and leaves it running 24/7 until merged
+  const standardPrHours = standardLifespanDays * 24;
+  const standardComputeCost = prsPerMonth * standardPrHours * odHourly;
+  const standardEbsCost = prsPerMonth * standardPrHours * ebsHourly;
+  const competitorTotalCost = standardComputeCost + standardEbsCost;
+
+  // -- 2. Zegion Math (Aggressive TTL & Event-Driven) --
+  // Compute is ONLY billed during active testing hours (Spot Pricing)
+  const zegionTotalActiveHours = prsPerMonth * activeHoursPerPr;
+  const zegionComputeCost = zegionTotalActiveHours * spotHourly;
+  
+  // EBS Storage is ONLY billed until the strict TTL ruthlessly destroys the environment
+  const zegionTotalTtlHours = prsPerMonth * strictTtlHours;
+  const zegionEbsCost = zegionTotalTtlHours * ebsHourly;
+  
+  const velzionTotalCost = zegionComputeCost + zegionEbsCost;
+
+  // -- 3. Savings Math --
+  const totalSavings = Math.max(0, competitorTotalCost - velzionTotalCost);
+  const savingsPercent = competitorTotalCost > 0 
+    ? ((totalSavings / competitorTotalCost) * 100).toFixed(1) 
+    : "0.0";
+
+  // -- 4. Waste Calculation (For Audit Table) --
+  const idleComputeHoursWasted = Math.max(0, (prsPerMonth * standardPrHours) - zegionTotalActiveHours);
+  const idleStorageHoursWasted = Math.max(0, (prsPerMonth * standardPrHours) - zegionTotalTtlHours);
+
+  // Visual Bar Chart Math
+  const maxBarCost = Math.max(competitorTotalCost, velzionTotalCost, 0.01);
+  const competitorWidth = `${(competitorTotalCost / maxBarCost) * 100}%`;
+  const velzionWidth = `${(velzionTotalCost / maxBarCost) * 100}%`;
+
+  // ==========================================
+  // 4. INLINE SVGS (Enterprise Aesthetics)
+  // ==========================================
+  const IconInfo = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+    </svg>
+  );
+  const IconServer = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line>
+    </svg>
+  );
+  const IconCloud = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+    </svg>
+  );
+  const IconRocket = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>
+    </svg>
+  );
+
+  return (
+    <div className="vz-dashboard">
+      <style>{`
+        :root {
+          --bg-dark: #050505;
+          --bg-card: rgba(18, 20, 24, 0.7);
+          --border-color: rgba(255, 255, 255, 0.08);
+          --accent-cyan: #00e5ff;
+          --accent-cyan-dim: rgba(0, 229, 255, 0.1);
+          --accent-emerald: #10b981;
+          --accent-emerald-dim: rgba(16, 185, 129, 0.15);
+          --accent-red: #ef4444;
+          --accent-red-dim: rgba(239, 68, 68, 0.15);
+          --accent-indigo: #818cf8;
+          --accent-amber: #f59e0b;
+          --text-main: #f3f4f6;
+          --text-muted: #9ca3af;
+          --font-family: 'Inter', system-ui, sans-serif;
+        }
+        body { margin: 0; background: var(--bg-dark); }
+        .vz-dashboard { display: flex; min-height: 100vh; color: var(--text-main); font-family: var(--font-family); background-color: var(--bg-dark); background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px); background-size: 40px 40px; }
+        .vz-sidebar { width: 260px; background-color: rgba(10, 10, 12, 0.95); backdrop-filter: blur(10px); border-right: 1px solid var(--border-color); padding: 32px 24px; display: flex; flex-direction: column; z-index: 10; }
+        .vz-logo-container { display: flex; align-items: center; gap: 12px; margin-bottom: 48px; }
+        .vz-logo-box { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent-cyan), #0077ff); border-radius: 8px; box-shadow: 0 0 20px var(--accent-cyan-dim); }
+        .vz-logo-text { margin: 0; font-size: 20px; letter-spacing: 2px; font-weight: 800; color: #fff; }
+        .vz-nav-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 1.5px; margin: 0 0 16px 8px; }
+        .vz-nav-item { padding: 12px 16px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s ease; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 12px; font-weight: 500; font-size: 14px; }
+        .vz-nav-item:hover { background-color: rgba(255,255,255,0.03); color: #fff; }
+        .vz-nav-item.active { background-color: var(--accent-cyan-dim); color: var(--accent-cyan); border: 1px solid rgba(0, 229, 255, 0.2); }
+        .vz-main { flex: 1; padding: 40px 60px; overflow-y: auto; position: relative; z-index: 5; }
+        .vz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 48px; }
+        .vz-header-titles h1 { color: #fff; margin: 0 0 8px 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
+        .vz-header-titles p { color: var(--text-muted); margin: 0; font-size: 15px; }
+        .vz-header-actions { display: flex; align-items: center; gap: 24px; }
+        .vz-profile { display: flex; align-items: center; gap: 16px; padding-right: 24px; border-right: 1px solid var(--border-color); }
+        .vz-avatar-fallback { width: 40px; height: 40px; border-radius: 50%; background-color: var(--accent-cyan-dim); color: var(--accent-cyan); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; border: 1px solid var(--accent-cyan); }
+        .vz-username { font-weight: 600; color: #fff; font-size: 14px; margin: 0; }
+        .vz-btn-logout { background-color: transparent; color: var(--text-muted); border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .vz-btn-logout:hover { color: #fff; border-color: #555; }
+        .calc-card { background: linear-gradient(145deg, rgba(22, 24, 28, 0.8) 0%, rgba(12, 14, 18, 0.9) 100%); backdrop-filter: blur(12px); padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 40px rgba(0,0,0,0.5); max-width: 900px; margin: 0 auto; }
+        .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 10px; }
+        .vz-slider-group { background: rgba(0,0,0,0.2); padding: 24px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.02); position: relative; display: flex; flex-direction: column; justify-content: space-between;}
+        .vz-slider-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; font-weight: 600; font-size: 15px; }
+        .vz-slider-val { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; background: rgba(255,255,255,0.05); padding: 6px 14px; border-radius: 6px; display: inline-block;}
+        .vz-range { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.1); outline: none; transition: 0.2s; margin-top: 10px;}
+        .vz-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; transition: 0.2s; }
+        .vz-range::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        .range-red::-webkit-slider-thumb { background: var(--accent-red); box-shadow: 0 0 15px var(--accent-red); }
+        .range-cyan::-webkit-slider-thumb { background: var(--accent-cyan); box-shadow: 0 0 15px var(--accent-cyan); }
+        .range-indigo::-webkit-slider-thumb { background: var(--accent-indigo); box-shadow: 0 0 15px var(--accent-indigo); }
+        .range-amber::-webkit-slider-thumb { background: var(--accent-amber); box-shadow: 0 0 15px var(--accent-amber); }
+        .tooltip-container { position: relative; display: inline-flex; align-items: center; gap: 8px; cursor: help; }
+        .tooltip-icon { color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: 0.2s; flex-shrink: 0;}
+        .tooltip-container:hover .tooltip-icon { color: var(--accent-cyan); }
+        .tooltip-text { visibility: hidden; width: 280px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); color: #fff; text-align: left; border-radius: 8px; padding: 14px; font-size: 13px; font-weight: 400; line-height: 1.5; position: absolute; z-index: 100; bottom: 125%; left: 0%; opacity: 0; transition: opacity 0.3s; border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .tooltip-text::after { content: ""; position: absolute; top: 100%; left: 20px; margin-left: -5px; border-width: 5px; border-style: solid; border-color: rgba(15, 23, 42, 0.95) transparent transparent transparent; }
+        .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
+        .calc-results { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; }
+        .calc-box { background: rgba(0,0,0,0.4); padding: 24px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: center; }
+        .calc-box-label { color: var(--text-muted); font-size: 13px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;}
+        .calc-money { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 800; margin: 0; }
+        .calc-hero { grid-column: span 2; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%); border: 1px solid rgba(16, 185, 129, 0.3); text-align: center; position: relative; overflow: hidden; padding: 40px;}
+        .calc-hero::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); animation: shine 3s infinite; }
+        @keyframes shine { 100% { left: 200%; } }
+        .audit-toggle-btn { background: transparent; border: 1px dashed var(--border-color); color: var(--text-muted); width: 100%; padding: 16px; margin-top: 30px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .audit-toggle-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); background: rgba(0, 229, 255, 0.05); }
+        .audit-panel { background: rgba(0,0,0,0.5); border-radius: 12px; border: 1px solid var(--border-color); margin-top: 20px; padding: 24px; animation: slideDown 0.3s ease-out forwards; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .audit-table { width: 100%; border-collapse: collapse; }
+        .audit-table th { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: #fff; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+        .audit-table td { padding: 16px 12px; border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 14px; color: var(--text-muted); }
+        .audit-table td:last-child, .audit-table th:last-child { text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #fff;}
+        .audit-highlight { color: var(--accent-red); font-weight: bold; }
+        .audit-success { color: var(--accent-cyan); font-weight: bold; }
+        .bar-chart-container { margin-top: 40px; padding-top: 30px; border-top: 1px solid var(--border-color); }
+        .bar-row { display: flex; align-items: center; margin-bottom: 20px; gap: 16px; }
+        .bar-label { width: 160px; font-size: 13px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 8px;}
+        .bar-track { flex: 1; height: 28px; background: rgba(255,255,255,0.05); border-radius: 14px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.02);}
+        .bar-fill { height: 100%; border-radius: 14px; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; padding-right: 12px; justify-content: flex-end; color: rgba(255,255,255,0.8); font-size: 11px; font-weight: bold;}
+        .bar-red { background: linear-gradient(90deg, #991b1b, var(--accent-red)); box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        .bar-cyan { background: linear-gradient(90deg, #0369a1, var(--accent-cyan)); box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        .arch-section { margin-top: 80px; max-width: 900px; margin-left: auto; margin-right: auto; }
+        .arch-title { text-align: center; color: #fff; font-size: 28px; margin-bottom: 10px; letter-spacing: -0.5px; }
+        .arch-subtitle { text-align: center; color: var(--text-muted); margin-bottom: 40px; font-size: 16px; }
+        .arch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .arch-card { background: rgba(18, 20, 24, 0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 28px; position: relative; overflow: hidden; transition: 0.3s; }
+        .arch-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.15); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .arch-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
+        .card-legacy::before { background: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); }
+        .card-basic::before { background: var(--accent-amber); box-shadow: 0 0 10px var(--accent-amber); }
+        .card-optimized::before { background: var(--accent-cyan); box-shadow: 0 0 10px var(--accent-cyan); }
+        .arch-icon { margin-bottom: 20px; display: inline-flex; align-items: center; justify-content: center; padding: 14px; border-radius: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); color: #fff; }
+        .arch-card h3 { margin: 0 0 12px 0; color: #fff; font-size: 18px; }
+        .arch-card p { margin: 0 0 20px 0; color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+        .arch-feature { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; font-size: 13px; color: #d1d5db; line-height: 1.4;}
+        .arch-feature span { color: var(--accent-emerald); font-weight: bold; }
+        .arch-feature.negative span { color: var(--accent-red); }
+        .lifecycle-section { margin-top: 80px; max-width: 900px; margin-left: auto; margin-right: auto; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 40px; }
+        .lifecycle-step { display: flex; gap: 24px; margin-bottom: 30px; position: relative; }
+        .lifecycle-step:last-child { margin-bottom: 0; }
+        .lifecycle-step::before { content: ''; position: absolute; left: 24px; top: 50px; bottom: -30px; width: 2px; background: rgba(255,255,255,0.1); }
+        .lifecycle-step:last-child::before { display: none; }
+        .step-number { width: 50px; height: 50px; border-radius: 50%; background: var(--bg-card); border: 2px solid var(--accent-cyan); color: var(--accent-cyan); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; z-index: 2; flex-shrink: 0; box-shadow: 0 0 15px var(--accent-cyan-dim);}
+        .step-content h4 { color: #fff; margin: 0 0 8px 0; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+        .step-content p { color: var(--text-muted); font-size: 15px; line-height: 1.6; margin: 0; }
+        .step-badge { background: var(--accent-indigo-dim); color: var(--accent-indigo); padding: 4px 10px; border-radius: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border: 1px solid rgba(129, 140, 248, 0.2); font-weight: bold;}
+      `}</style>
+
+      {/* ========================================== */}
+      {/* 5. SIDEBAR NAVIGATION                        */}
+      {/* ========================================== */}
+      <div className="vz-sidebar">
+        <div className="vz-logo-container">
+          <div className="vz-logo-box"></div>
+          <h2 className="vz-logo-text">VELZION</h2>
+        </div>
+        <p className="vz-nav-label">Platform Control</p>
+        <Link to="/dashboard" className="vz-nav-item">
+          <span style={{ fontSize: '16px' }}>⚡</span> Active Deployments
+        </Link>
+        <div className="vz-nav-item active">
+          <span style={{ fontSize: '16px' }}>📊</span> FinOps Dashboard
+        </div>
+        <div className="vz-nav-item" onClick={() => navigate('/dashboard')} style={{cursor: 'pointer'}}>
+          <span style={{ fontSize: '16px' }}>🔐</span> Security & IAM
+        </div>
+      </div>
+
+      {/* ========================================== */}
+      {/* 6. MAIN CONTENT WRAPPER                      */}
+      {/* ========================================== */}
+      <div className="vz-main">
+        <div className="vz-header">
+          <div className="vz-header-titles">
+            <h1>FinOps ROI Calculator</h1>
+            <p>Model the financial impact of adopting Zegion's Strict TTL and Event-Driven Spot Architecture.</p>
+          </div>
+          <div className="vz-header-actions">
+            <div className="vz-profile">
+              <div className="vz-avatar-fallback">{user?.username?.charAt(0)?.toUpperCase() || 'U'}</div>
+              <div className="vz-user-info"><p className="vz-username">{user?.username || 'Admin'}</p></div>
+            </div>
+            <button onClick={handleLogout} className="vz-btn-logout">Sign Out</button>
+          </div>
+        </div>
+
+        {/* ========================================== */}
+        {/* 7. INTERACTIVE CALCULATOR CARD             */}
+        {/* ========================================== */}
+        <div className="calc-card">
+          
+          <div className="calc-grid">
+            
+            {/* Slider 1: PRs Per Month */}
+            <div className="vz-slider-group full-width" style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <div>
+                <div className="vz-slider-header" style={{ marginBottom: '5px' }}>
+                  <span style={{color: '#fff', fontSize: '18px'}}>Pull Requests per Month</span>
+                </div>
+                <p style={{fontSize: '12px', color: 'var(--text-muted)', margin: '0 0 15px 0', maxWidth: '300px'}}>The total number of ephemeral environments provisioned monthly across your organization.</p>
+              </div>
+              <div style={{ flex: 1, paddingLeft: '40px' }}>
+                <div style={{ textAlign: 'right', marginBottom: '10px' }}><span className="vz-slider-val" style={{color: 'var(--accent-cyan)'}}>{prsPerMonth} PRs</span></div>
+                <input type="range" min="10" max="500" step="5" value={prsPerMonth} onChange={(e) => setPrsPerMonth(e.target.value)} className="vz-range range-cyan" />
+              </div>
+            </div>
+
+            {/* Slider 2: Standard CI/CD Lifespan */}
+            <div className="vz-slider-group">
+              <div className="vz-slider-header">
+                <div className="tooltip-container">
+                  <span style={{color: '#fff'}}>Standard PR Lifespan (Days)</span>
+                  <span className="tooltip-icon"><IconInfo /></span>
+                  <span className="tooltip-text"><b>The Competitor:</b> Standard CI/CD providers leave instances running 24/7 until the code is actually merged or closed.</span>
+                </div>
+                <span className="vz-slider-val" style={{color: 'var(--accent-red)'}}>{standardLifespanDays} Days</span>
+              </div>
+              <input type="range" min="1" max="14" step="1" value={standardLifespanDays} onChange={(e) => setStandardLifespanDays(e.target.value)} className="vz-range range-red" />
+              <p style={{fontSize: '11px', color: 'var(--text-muted)', margin: '15px 0 0 0'}}>Calculates standard 24/7 On-Demand compute + storage waste.</p>
+            </div>
+
+            {/* Slider 3: Zegion Active Time */}
+            <div className="vz-slider-group">
+              <div className="vz-slider-header">
+                <div className="tooltip-container">
+                  <span style={{color: '#fff'}}>Zegion Active Testing Time</span>
+                  <span className="tooltip-icon"><IconInfo /></span>
+                  <span className="tooltip-text"><b>Drives Zegion Compute:</b> Thanks to Auto-Sleep, Compute billing is limited ONLY to the hours a developer actively tests the live URL.</span>
+                </div>
+                <span className="vz-slider-val" style={{color: 'var(--accent-emerald)'}}>{activeHoursPerPr}h</span>
+              </div>
+              <input type="range" min="0.5" max="12" step="0.5" value={activeHoursPerPr} onChange={(e) => setActiveHoursPerPr(e.target.value)} className="vz-range range-emerald" style={{accentColor: 'var(--accent-emerald)'}}/>
+              <p style={{fontSize: '11px', color: 'var(--text-muted)', margin: '15px 0 0 0'}}>Calculates active Spot Instance runtime billing.</p>
+            </div>
+
+            {/* Slider 4: Zegion Strict TTL */}
+            <div className="vz-slider-group full-width">
+              <div className="vz-slider-header">
+                <div className="tooltip-container">
+                  <span style={{color: '#fff'}}>Zegion Strict TTL Teardown Limit (Hours)</span>
+                  <span className="tooltip-icon"><IconInfo /></span>
+                  <span className="tooltip-text"><b>Drives Zegion Storage:</b> To prevent EBS volume waste, Zegion enforces a strict Time-To-Live. After this many hours, the dormant environment is mercilessly destroyed. (Devs can re-provision instantly if needed).</span>
+                </div>
+                <span className="vz-slider-val" style={{color: 'var(--accent-amber)'}}>{strictTtlHours}h</span>
+              </div>
+              <input type="range" min="1" max="48" step="1" value={strictTtlHours} onChange={(e) => setStrictTtlHours(e.target.value)} className="vz-range range-amber" />
+              <p style={{fontSize: '11px', color: 'var(--text-muted)', margin: '15px 0 0 0'}}>Calculates the maximum lifespan of the dormant EBS Storage volume.</p>
+            </div>
+          </div>
+
+          {/* --- RESULTS DASHBOARD --- */}
+          <div className="calc-results">
+            <div className="calc-box">
+              <div className="calc-box-label tooltip-container">
+                Standard CI/CD Cost <span className="tooltip-icon"><IconInfo /></span>
+                <span className="tooltip-text">Calculated as {prsPerMonth} environments running continuously for {standardLifespanDays} days using On-Demand Compute + EBS Pricing.</span>
+              </div>
+              <h3 className="calc-money" style={{color: 'var(--accent-red)'}}>${competitorTotalCost.toFixed(2)}</h3>
+            </div>
+            
+            <div className="calc-box">
+              <div className="calc-box-label tooltip-container" style={{cursor: 'help'}}>
+                Zegion Ephemeral Cost <span className="tooltip-icon"><IconInfo /></span>
+                <span className="tooltip-text">
+                  <b>The Breakdown:</b><br/><br/>
+                  Spot Compute (Active Hrs): ${(zegionComputeCost).toFixed(2)}<br/>
+                  EBS Storage (TTL Hrs): ${(zegionEbsCost).toFixed(2)}
+                </span>
+              </div>
+              <h3 className="calc-money" style={{color: 'var(--accent-cyan)'}}>${velzionTotalCost.toFixed(2)}</h3>
+            </div>
+
+            <div className="calc-box calc-hero">
+              <span className="calc-box-label" style={{color: 'var(--accent-emerald)', justifyContent: 'center'}}>Total Monthly Savings</span>
+              <h2 className="calc-money" style={{color: '#fff', fontSize: '48px', margin: '10px 0'}}>
+                ${totalSavings.toFixed(2)} 
+                <span style={{fontSize: '20px', opacity: 0.8, fontWeight: 500, marginLeft: '12px'}}>
+                  ({savingsPercent}%)
+                </span>
+              </h2>
+            </div>
+          </div>
+
+          {/* --- DETAILED FINOPS AUDIT --- */}
+          <button 
+            className="audit-toggle-btn" 
+            onClick={() => setShowDetailedAudit(!showDetailedAudit)}
+          >
+            {showDetailedAudit ? 'Hide Detailed FinOps Audit' : 'View Detailed Compute & Storage Waste Analysis'}
+          </button>
+          
+          {showDetailedAudit && (
+            <div className="audit-panel">
+              <table className="audit-table">
+                <thead>
+                  <tr>
+                    <th>Billing Line Item</th>
+                    <th>Total Hours Billed</th>
+                    <th>Hourly Rate</th>
+                    <th>Total Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Standard CI/CD Compute (On-Demand 24/7)</td>
+                    <td>{(prsPerMonth * standardPrHours).toLocaleString()} hrs</td>
+                    <td>${odHourly.toFixed(4)}</td>
+                    <td>${standardComputeCost.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td>Standard CI/CD Storage (EBS 24/7)</td>
+                    <td>{(prsPerMonth * standardPrHours).toLocaleString()} hrs</td>
+                    <td>${ebsHourly.toFixed(4)}</td>
+                    <td>${standardEbsCost.toFixed(2)}</td>
+                  </tr>
+                  <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                    <td><b style={{color: 'var(--text-main)'}}>Total Competitor Run Rate</b></td>
+                    <td></td><td></td>
+                    <td><b style={{color: 'var(--accent-red)'}}>${competitorTotalCost.toFixed(2)}</b></td>
+                  </tr>
+                  <tr><td colSpan="4" style={{padding: '8px'}}></td></tr>
+                  <tr>
+                    <td>Zegion Compute (Active Spot Usage)</td>
+                    <td>{zegionTotalActiveHours.toLocaleString()} hrs</td>
+                    <td><span style={{color: 'var(--accent-cyan)'}}>${spotHourly.toFixed(4)}</span></td>
+                    <td>${zegionComputeCost.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td>Zegion Storage (EBS Limited by TTL)</td>
+                    <td>{zegionTotalTtlHours.toLocaleString()} hrs</td>
+                    <td>${ebsHourly.toFixed(4)}</td>
+                    <td>${zegionEbsCost.toFixed(2)}</td>
+                  </tr>
+                  <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                    <td><b style={{color: 'var(--text-main)'}}>Total Zegion Run Rate</b></td>
+                    <td></td><td></td>
+                    <td><b style={{color: 'var(--accent-cyan)'}}>${velzionTotalCost.toFixed(2)}</b></td>
+                  </tr>
+                  <tr><td colSpan="4" style={{padding: '8px'}}></td></tr>
+                  <tr style={{ background: 'rgba(239, 68, 68, 0.1)' }}>
+                    <td colSpan="3" style={{color: 'var(--accent-red)'}}><b>Idle Compute Hours Prevented (Waste vs Actual Use)</b></td>
+                    <td className="audit-highlight">-{idleComputeHoursWasted.toLocaleString()} hrs</td>
+                  </tr>
+                  <tr style={{ background: 'rgba(245, 158, 11, 0.1)' }}>
+                    <td colSpan="3" style={{color: 'var(--accent-amber)'}}><b>Idle Storage Hours Prevented (Waste vs TTL)</b></td>
+                    <td style={{color: 'var(--accent-amber)', fontWeight: 'bold'}}>-{idleStorageHoursWasted.toLocaleString()} hrs</td>
+                  </tr>
+                  <tr style={{ background: 'rgba(16, 185, 129, 0.15)' }}>
+                    <td colSpan="3" style={{color: 'var(--accent-emerald)'}}><b>Total Financial Impact</b></td>
+                    <td className="audit-success">-${totalSavings.toFixed(2)}/mo</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* --- VISUAL BAR CHART --- */}
+          <div className="bar-chart-container">
+            <div className="bar-row">
+              <span className="bar-label" style={{color: 'var(--accent-red)'}}>Standard CI/CD</span>
+              <div className="bar-track">
+                <div className="bar-fill bar-red" style={{ width: competitorWidth }}></div>
+              </div>
+            </div>
+            <div className="bar-row">
+              <div className="bar-label tooltip-container" style={{color: 'var(--accent-cyan)'}}>
+                Zegion Engine <span className="tooltip-icon"><IconInfo /></span>
+                <span className="tooltip-text">Visualizes the cost of Ephemeral Spot Compute + TTL Storage relative to standard pipelines.</span>
+              </div>
+              <div className="bar-track">
+                <div className="bar-fill bar-cyan" style={{ width: velzionWidth }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================== */}
+        {/* 8. ARCHITECTURE EVOLUTION CARDS              */}
+        {/* ========================================== */}
+        <div className="arch-section">
+          <h2 className="arch-title">The Evolution of Preview Environments</h2>
+          <p className="arch-subtitle">Why traditional CI/CD pipelines fail at cost optimization.</p>
+          
+          <div className="arch-grid">
+            <div className="arch-card card-legacy">
+              <div className="arch-icon"><IconServer /></div>
+              <h3>1. Legacy Staging</h3>
+              <p>The traditional approach. A dedicated staging server shared by the entire team, running on-demand 24/7 regardless of usage.</p>
+              <div className="arch-feature negative"><span>✗</span> Billed 730 hours per month constantly</div>
+              <div className="arch-feature negative"><span>✗</span> Expensive On-Demand pricing tier</div>
+              <div className="arch-feature negative"><span>✗</span> High risk of merge queue conflicts</div>
+            </div>
+
+            <div className="arch-card card-basic">
+              <div className="arch-icon"><IconCloud /></div>
+              <h3>2. Standard Ephemeral</h3>
+              <p>Modern CI/CD spins up a unique environment for every PR, but abandons them running idle until the PR is merged days later.</p>
+              <div className="arch-feature"><span>✓</span> Isolated testing environment per PR</div>
+              <div className="arch-feature negative"><span>✗</span> Rampant idle cloud waste over weekends</div>
+              <div className="arch-feature negative"><span>✗</span> Often relies on On-Demand nodes</div>
+            </div>
+
+            <div className="arch-card card-optimized" style={{ background: 'linear-gradient(180deg, rgba(0, 229, 255, 0.05) 0%, rgba(18, 20, 24, 0.8) 100%)' }}>
+              <div className="arch-icon" style={{color: 'var(--accent-cyan)'}}><IconRocket /></div>
+              <h3 style={{ color: 'var(--accent-cyan)' }}>3. Zegion Architecture</h3>
+              <p>State-aware infrastructure utilizing Strict TTLs, Spot instances, and intelligent auto-hibernation to eliminate idle burn.</p>
+              <div className="arch-feature"><span>✓</span> <b>60% Spot Discount</b> applied natively</div>
+              <div className="arch-feature"><span>✓</span> <b>Strict TTL:</b> Mercilessly culls dormant EBS</div>
+              <div className="arch-feature"><span>✓</span> <b>ChatOps:</b> <code>/zegion wake</code> via GitHub</div>
+              <div className="arch-feature"><span>✓</span> <b>Self-Healing:</b> Auto-replaces dead Spot nodes</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================== */}
+        {/* 9. ZEGION LIFECYCLE DEEP DIVE                */}
+        {/* ========================================== */}
+        <div className="lifecycle-section">
+          <h3 style={{color: '#fff', fontSize: '24px', marginTop: 0, marginBottom: '32px', textAlign: 'center'}}>Under the Hood: The Aggressive TTL Lifecycle</h3>
+          
+          <div className="lifecycle-step">
+            <div className="step-number">1</div>
+            <div className="step-content">
+              <h4>PR Opened & Webhook Triggered <span className="step-badge">n8n Engine</span></h4>
+              <p>When a developer opens a Pull Request, GitHub fires a webhook to the n8n orchestration engine. n8n dynamically creates a Terraform workspace, provisions a fresh AWS Spot Instance (saving 60% instantly), and posts the live URL back to GitHub.</p>
+            </div>
+          </div>
+
+          <div className="lifecycle-step">
+            <div className="step-number">2</div>
+            <div className="step-content">
+              <h4>State-Aware Idle Hibernation <span className="step-badge">FinOps</span></h4>
+              <p>Once the container finishes building, an invisible 10-minute timer begins. If the developer isn't actively reviewing, a Gatekeeper node verifies the EC2 status via the AWS API. If running, it cleanly hibernates the instance, dropping the Compute Run Rate to $0.00/hr while keeping the EBS disk alive.</p>
+            </div>
+          </div>
+
+          <div className="lifecycle-step">
+            <div className="step-number">3</div>
+            <div className="step-content">
+              <h4>The Strict TTL Enforcement <span className="step-badge">Architecture</span></h4>
+              <p>Rather than letting sleeping EBS disks accumulate costs for days waiting for a merge, Zegion enforces a Strict Time-To-Live. After the designated TTL window expires, n8n executes a ruthless <code>terraform destroy</code>, guaranteeing zero ghost infrastructure is left behind.</p>
+            </div>
+          </div>
+
+          <div className="lifecycle-step">
+            <div className="step-number">4</div>
+            <div className="step-content">
+              <h4>ChatOps Resumption & DX Fallback <span className="step-badge">Resilience</span></h4>
+              <p>If a developer returns the next day to a destroyed PR, they simply type <code>/zegion provision</code> to rebuild the environment from scratch. We trade 3 minutes of Developer Experience (DX) wait time for 98% guaranteed cloud savings.</p>
+            </div>
+          </div>
+          
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+export default FinOpsCalculator;
