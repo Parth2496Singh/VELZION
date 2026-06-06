@@ -8,15 +8,17 @@ Thumbs.db
 *.log
 *.tmp
 
+# --- GLOBAL SECRETS (CATCH-ALL) ---
+.env
+.env.*
+*.pem
+*.key
+*.pub
+
 # --- FRONTEND (REACT / VITE) ---
 frontend/node_modules/
 frontend/dist/
 frontend/dist-ssr/
-frontend/package-lock.json
-frontend/.env
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.production.local
 frontend/.vite/
 frontend/.vite-temp/
 
@@ -24,16 +26,17 @@ frontend/.vite-temp/
 backend/venv/
 backend/ENV/
 backend/env/
-backend/.env
 backend/__pycache__/
 backend/**/*.pyc
 backend/db.sqlite3
 backend/db.sqlite3-journal
 
-# --- CONTAINERS & DATABASES (DOCKER / POSTGRES) ---
+# --- CONTAINERS & DATABASES (DOCKER / POSTGRES / N8N) ---
 backend/.docker-volumes/
 **/postgres_data/
 **/pgdata/
+**/n8n_data/
+.n8n/
 
 # --- ORCHESTRATION LAYER (TERRAFORM) ---
 # Ignore the active engine cache blocks
@@ -48,8 +51,3 @@ backend/terraform/*.tfvars.json
 
 # CRITICAL: Nuke the local execution workspaces created by n8n!
 backend/terraform/workspace_pr_*/
-
-# --- SECURITY KEYS ---
-*.pem
-*.key
-*.pub

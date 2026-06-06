@@ -1,0 +1,1024 @@
+{
+  "name": "Zegion Orchestration (Enterprise Spot Edition - Gatekeeper)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zegion-pr",
+        "options": {}
+      },
+      "id": "a6712de1-6ba1-476c-8a46-3770ac9cfdd0",
+      "name": "Webhook (PR Lifecycle)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -2784,
+        2208
+      ],
+      "webhookId": "053a4618-b96a-4e5b-8898-63ba54ba0da1"
+    },
+    {
+      "parameters": {
+        "url": "=http://54.86.145.100/api/integrations/lookup/?repo_url={{ encodeURIComponent($json.body.repository.clone_url) }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "repo_url",
+              "value": "={{ $json.body.repository.clone_url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5e175451-f226-4fa7-b1a9-509eb692a8f5",
+      "name": "Lookup Tenant",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2592,
+        2208
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $('Webhook (PR Lifecycle)').first().json.body.action }}",
+              "rightValue": "closed",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6ee74bad-8892-40d0-b9d2-86af4cbe987f",
+      "name": "If PR Opened",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2384,
+        2208
+      ]
+    },
+    {
+      "parameters": {
+        "command": "=# 1. Create a dynamic workspace for this PR\nPR_DIR=\"/home/node/terraform/workspace_pr_{{ $('Webhook (PR Lifecycle)').first().json.body.number }}\"\nmkdir -p $PR_DIR\ncp /home/node/terraform/main.tf $PR_DIR/main.tf\ncd $PR_DIR\n\n# 2. Deploy infrastructure via Terraform\nterraform init > /dev/null\nterraform apply -var=\"pr_number={{ $('Webhook (PR Lifecycle)').first().json.body.number }}\" -var=\"repo_url={{ $('Webhook (PR Lifecycle)').first().json.body.repository.clone_url }}\" -auto-approve > /dev/null\nsleep 5\nterraform output -json"
+      },
+      "id": "2cee0dc8-362b-42c5-8ab5-762d8954d5ff",
+      "name": "Deploy PR",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -2128,
+        2096
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{ $('Webhook (PR Lifecycle)').first().json.body.repository.full_name }}/issues/{{ $('Webhook (PR Lifecycle)').first().json.body.number }}/comments",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <your-github-PAT>"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"body\": \"### 🚀 Zegion Environment Provisioned\\nInfrastructure established inside your AWS VPC.\\n\\n**🔗 Live URL:** http://{{ JSON.parse($('Deploy PR').first().json.stdout).public_ip.value }}\\n**🚦 Status:** `RUNNING` (Container is compiling)\\n\\n---\\n#### ⏱️ FinOps Idle Timeout Enabled\\nTo minimize Spot Instance burn rate (`$0.0043 / hr`), this environment will remain active for **10 minutes** for your initial review. After 10 minutes of inactivity, Zegion will automatically hibernate the instance to drop compute costs to `$0.00`.\"\n}",
+        "options": {}
+      },
+      "id": "585396c3-224a-4054-acfd-8ea59fddeb5c",
+      "name": "GitHub (Deployed)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1888,
+        2096
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://54.86.145.100/api/webhooks/github/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-velzion-secret",
+              "value": "L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"repo_url\": \"{{ $('Webhook (PR Lifecycle)').first().json.body.repository.clone_url }}\",\n  \"pr_number\": \"{{ $('Webhook (PR Lifecycle)').first().json.body.number }}\",\n  \"status\": \"RUNNING\",\n  \"instance_id\": \"{{ JSON.parse($('Deploy PR').first().json.stdout).instance_id.value }}\",\n  \"dns_prefix\": \"http://{{ JSON.parse($('Deploy PR').first().json.stdout).public_ip.value }}\"\n}",
+        "options": {}
+      },
+      "id": "486f96d2-1a43-48d0-8211-d6f2d455badd",
+      "name": "Django (Deploy)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1632,
+        2096
+      ]
+    },
+    {
+      "parameters": {
+        "command": "=PR_DIR=\"/home/node/terraform/workspace_pr_{{ $('Webhook (PR Lifecycle)').first().json.body.number }}\"\ncd $PR_DIR\nterraform destroy -var=\"pr_number={{ $('Webhook (PR Lifecycle)').first().json.body.number }}\" -var=\"repo_url={{ $('Webhook (PR Lifecycle)').first().json.body.repository.clone_url }}\" -auto-approve > /dev/null\ncd ..\nrm -rf $PR_DIR\necho '{\"status\": \"destroyed\"}'"
+      },
+      "id": "56466b78-526c-49a8-ae00-b4f322647d68",
+      "name": "Destroy PR",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -2128,
+        2304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{ $('Webhook (PR Lifecycle)').first().json.body.repository.full_name }}/issues/{{ $('Webhook (PR Lifecycle)').first().json.body.number }}/comments",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <your-github-PAT>"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"body\": \"### 🛑 Zegion Environment Destroyed\\nThis pull request was closed. The Zegion Control Plane has successfully intercepted the webhook and terminated the associated infrastructure.\\n\\n**🚦 Final Status:** `DESTROYED`\\n\\n---\\n#### 📉 Final FinOps Report\\n* 🗑️ **Resources Terminated:** `AWS EC2 Spot Instance`, `EBS gp3 Volume`, `Public IP`\\n\\n| Metric | Value |\\n| :--- | :--- |\\n| ⏱️ **Total Uptime** | `{{ Math.floor((Date.parse($('Webhook (PR Lifecycle)').first().json.body.pull_request.closed_at) - Date.parse($('Webhook (PR Lifecycle)').first().json.body.pull_request.created_at)) / 3600000) > 0 ? Math.floor((Date.parse($('Webhook (PR Lifecycle)').first().json.body.pull_request.closed_at) - Date.parse($('Webhook (PR Lifecycle)').first().json.body.pull_request.created_at)) / 3600000) + 'h ' : '' }}{{ Math.floor(((Date.parse($('Webhook (PR Lifecycle)').first().json.body.pull_request.closed_at) - Date.parse($('Webhook (PR Lifecycle)').first().json.body.pull_request.created_at)) % 3600000) / 60000) }}m {{ Math.floor(((Date.parse($('Webhook (PR Lifecycle)').first().json.body.pull_request.closed_at) - Date.parse($('Webhook (PR Lifecycle)').first().json.body.pull_request.created_at)) % 60000) / 1000) }}s` |\\n| 🌩️ **On-Demand Cost** | `${{ (((Date.parse($('Webhook (PR Lifecycle)').first().json.body.pull_request.closed_at) - Date.parse($('Webhook (PR Lifecycle)').first().json.body.pull_request.created_at)) / 3600000) * 0.0104).toFixed(5) }}` |\\n| 🎯 **Spot Price Cost** | `${{ (((Date.parse($('Webhook (PR Lifecycle)').first().json.body.pull_request.closed_at) - Date.parse($('Webhook (PR Lifecycle)').first().json.body.pull_request.created_at)) / 3600000) * 0.0043).toFixed(5) }}` |\\n| 📉 **Total Saved** | `+${{ (((Date.parse($('Webhook (PR Lifecycle)').first().json.body.pull_request.closed_at) - Date.parse($('Webhook (PR Lifecycle)').first().json.body.pull_request.created_at)) / 3600000) * 0.0061).toFixed(5) }}` |\\n\\n> _Powered by the **Zegion Engine**. 58.7% Spot Reduction applied. Zero ghost servers left behind._\"\n}",
+        "options": {}
+      },
+      "id": "7b3e3990-5fc1-4df5-8d07-fee8772191a0",
+      "name": "GitHub Comment (Destroyed)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1888,
+        2304
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://54.86.145.100/api/webhooks/github/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-velzion-secret",
+              "value": "L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"repo_url\": \"{{ $('Webhook (PR Lifecycle)').first().json.body.repository.clone_url }}\",\n  \"pr_number\": \"{{ $('Webhook (PR Lifecycle)').first().json.body.number }}\",\n  \"status\": \"DESTROYED\"\n}",
+        "options": {}
+      },
+      "id": "4d3250f2-2fb2-4161-9492-1701f7323c0d",
+      "name": "Notify Django (Destroy)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1632,
+        2304
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zegion-auto-sleep",
+        "options": {}
+      },
+      "id": "e574a452-c8a5-4552-9153-48d357e1fecb",
+      "name": "Webhook (Auto-Sleep)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -2784,
+        2544
+      ],
+      "webhookId": "92d9e97c-f8bd-4b67-8fcb-8c44d7579105"
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "minutes"
+      },
+      "id": "de824f78-07e2-4464-90cd-4520e3aa38a2",
+      "name": "Idle Timeout (10m)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -2592,
+        2544
+      ],
+      "webhookId": "4acbfb22-bbdb-4dd2-820c-254c27935e75"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ec2.us-east-1.amazonaws.com/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "aws",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "Action",
+              "value": "DescribeInstances"
+            },
+            {
+              "name": "Version",
+              "value": "2016-11-15"
+            },
+            {
+              "name": "InstanceId.1",
+              "value": "={{ $('Webhook (Auto-Sleep)').first().json.body.instance_id }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "8b7eec39-479f-4c70-81f4-8cf278d0874d",
+      "name": "Gatekeeper (Check AWS)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2384,
+        2544
+      ],
+      "credentials": {
+        "aws": {
+          "id": "Qxqr4erjSdYV3J9P",
+          "name": "AWS (IAM) account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.data }}",
+              "rightValue": "running</name>",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "50f57b3a-7671-47cf-aecc-b841280d1448",
+      "name": "Is Server Still Running?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2192,
+        2544
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ec2.us-east-1.amazonaws.com/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "aws",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "Action",
+              "value": "StopInstances"
+            },
+            {
+              "name": "Version",
+              "value": "2016-11-15"
+            },
+            {
+              "name": "InstanceId.1",
+              "value": "={{ $('Webhook (Auto-Sleep)').first().json.body.instance_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8af695e2-5ab6-4b05-8110-eeca3be90a00",
+      "name": "Auto-Hibernate AWS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1936,
+        2544
+      ],
+      "credentials": {
+        "aws": {
+          "id": "Qxqr4erjSdYV3J9P",
+          "name": "AWS (IAM) account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{ $('Webhook (Auto-Sleep)').first().json.body.repo_url.split('/')[3] }}/{{ $('Webhook (Auto-Sleep)').first().json.body.repo_url.split('/')[4].replace('.git','') }}/issues/{{ $('Webhook (Auto-Sleep)').first().json.body.pr_number }}/comments",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <your-github-PAT>"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"body\": \"### 💤 Zegion Environment Hibernating\\nThe 10-minute idle window has expired, and the instance has been cleanly suspended. Disk state is preserved.\\n\\n* **🚦 Status:** `SLEEPING`\\n* **🛑 Compute Run Rate:** `$0.0000 / hr`\\n\\n> ⚠️ _AWS requires ~2 minutes to securely lock the Spot Request. After that, you may type `/zegion wake` to instantly resume this instance._\"\n}",
+        "options": {}
+      },
+      "id": "50986b5b-f8f0-4094-945e-1cc9a1c2d492",
+      "name": "GitHub (Auto-Sleep)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1680,
+        2544
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://54.86.145.100/api/webhooks/github/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-velzion-secret",
+              "value": "L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"repo_url\": \"{{ $('Webhook (Auto-Sleep)').first().json.body.repo_url }}\",\n  \"pr_number\": \"{{ $('Webhook (Auto-Sleep)').first().json.body.pr_number }}\",\n  \"status\": \"SLEEPING\"\n}",
+        "options": {}
+      },
+      "id": "7e3165ca-5331-433e-a5ee-2e95fe1a655f",
+      "name": "Django (Auto-Sleep)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1440,
+        2544
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zegion-chatops-sleep",
+        "options": {}
+      },
+      "id": "98ae57b5-985e-4ee5-b6e6-600895d61895",
+      "name": "Webhook (Sleep)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -2784,
+        2752
+      ],
+      "webhookId": "f5e7c4cc-e950-4931-9588-ee9abff18fb1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ec2.us-east-1.amazonaws.com/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "aws",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "Action",
+              "value": "StopInstances"
+            },
+            {
+              "name": "Version",
+              "value": "2016-11-15"
+            },
+            {
+              "name": "InstanceId.1",
+              "value": "={{ $('Webhook (Sleep)').first().json.body.instance_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bb1b7c16-cc51-45f0-a13b-79d1d548631a",
+      "name": "Hibernate AWS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2592,
+        2752
+      ],
+      "credentials": {
+        "aws": {
+          "id": "Qxqr4erjSdYV3J9P",
+          "name": "AWS (IAM) account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{ $('Webhook (Sleep)').first().json.body.repo_url.split('/')[3] }}/{{ $('Webhook (Sleep)').first().json.body.repo_url.split('/')[4].replace('.git','') }}/issues/{{ $('Webhook (Sleep)').first().json.body.pr_number }}/comments",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <your-github-PAT>"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"body\": \"### 💤 Zegion Environment Hibernating\\nThe instance has been cleanly suspended. Disk state is preserved.\\n\\n* **🚦 Status:** `SLEEPING`\\n* **🛑 Compute Run Rate:** `$0.0000 / hr`\\n\\n> ⚠️ _AWS requires ~2 minutes to securely lock the Spot Request. After that, you may type `/zegion wake` to instantly resume this instance._\"\n}",
+        "options": {}
+      },
+      "id": "3dc6a191-206a-4c06-a937-9a7bfb372fc8",
+      "name": "GitHub (Sleep)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2336,
+        2752
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://54.86.145.100/api/webhooks/github/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-velzion-secret",
+              "value": "L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"repo_url\": \"{{ $('Webhook (Sleep)').first().json.body.repo_url }}\",\n  \"pr_number\": \"{{ $('Webhook (Sleep)').first().json.body.pr_number }}\",\n  \"status\": \"SLEEPING\"\n}",
+        "options": {}
+      },
+      "id": "fa3cedbc-b57e-4194-ac9a-28008dc4061a",
+      "name": "Django (Sleep)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2080,
+        2752
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zegion-chatops-wake",
+        "options": {}
+      },
+      "id": "fd2c343f-7464-47ef-8c12-488b2c1132f0",
+      "name": "Webhook (Wake)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -2784,
+        3008
+      ],
+      "webhookId": "d8844aa8-14dd-4a31-8797-5ac1c2d8a74f"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ec2.us-east-1.amazonaws.com/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "aws",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "Action",
+              "value": "StartInstances"
+            },
+            {
+              "name": "Version",
+              "value": "2016-11-15"
+            },
+            {
+              "name": "InstanceId.1",
+              "value": "={{ $('Webhook (Wake)').first().json.body.instance_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c93b2a91-1512-4498-ad41-f8dd8f556f4b",
+      "name": "Wake API Start",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2592,
+        3008
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "aws": {
+          "id": "Qxqr4erjSdYV3J9P",
+          "name": "AWS (IAM) account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{ $('Webhook (Wake)').first().json.body.repo_url.split('/')[3] }}/{{ $('Webhook (Wake)').first().json.body.repo_url.split('/')[4].replace('.git','') }}/issues/{{ $('Webhook (Wake)').first().json.body.pr_number }}/comments",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <your-github-PAT>"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"body\": \"### ❌ Spot Capacity Reclaimed\\n**Zegion Control Plane Error:** AWS has forcefully reclaimed this Spot Instance to fulfill On-Demand capacity in the `us-east-1` region. The infrastructure is permanently terminated.\\n\\n**To provision a fresh environment:**\\nPlease completely close this PR (to trigger the cleanup routine) and reopen it. Zegion will automatically request a new Spot Instance from a different capacity pool.\"\n}",
+        "options": {}
+      },
+      "id": "22839959-7f20-4b80-99bd-ceb75c1e46f2",
+      "name": "GitHub (Spot Reclaimed)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2336,
+        3152
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 15,
+        "unit": "seconds"
+      },
+      "id": "a81893cd-0ed1-4ef6-a5ff-1382495f353f",
+      "name": "Wait For IP",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -2336,
+        2896
+      ],
+      "webhookId": "6177c59c-63bb-4fde-977b-76f4a8302d66"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ec2.us-east-1.amazonaws.com/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "aws",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "Action",
+              "value": "DescribeInstances"
+            },
+            {
+              "name": "Version",
+              "value": "2016-11-15"
+            },
+            {
+              "name": "InstanceId.1",
+              "value": "={{ $('Webhook (Wake)').first().json.body.instance_id }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "f3e95be1-562e-493d-a582-1a96b8ef48c5",
+      "name": "Wake API Describe",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2128,
+        2896
+      ],
+      "credentials": {
+        "aws": {
+          "id": "Qxqr4erjSdYV3J9P",
+          "name": "AWS (IAM) account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{ $('Webhook (Wake)').first().json.body.repo_url.split('/')[3] }}/{{ $('Webhook (Wake)').first().json.body.repo_url.split('/')[4].replace('.git','') }}/issues/{{ $('Webhook (Wake)').first().json.body.pr_number }}/comments",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <your-github-PAT>"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"body\": \"### 🚀 Zegion Environment Awakened\\nThe hibernation cycle has ended. Traffic routing restored.\\n\\n* **🔗 New Live URL:** http://{{ $('Wake API Describe').first().json.data.match(/<ipAddress>([\\d\\.]+)<\\/ipAddress>/)[1] }}\\n* **🚦 Status:** `RUNNING`\\n\\n> _Type `/zegion sleep` to suspend again._\"\n}",
+        "options": {}
+      },
+      "id": "180588fa-d846-4afb-9684-5c9346522e3c",
+      "name": "GitHub (Wake)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1888,
+        2896
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://54.86.145.100/api/webhooks/github/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-velzion-secret",
+              "value": "L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"repo_url\": \"{{ $('Webhook (Wake)').first().json.body.repo_url }}\",\n  \"pr_number\": \"{{ $('Webhook (Wake)').first().json.body.pr_number }}\",\n  \"status\": \"RUNNING\",\n  \"dns_prefix\": \"http://{{ $('Wake API Describe').first().json.data.match(/<ipAddress>([\\d\\.]+)<\\/ipAddress>/)[1] }}\"\n}",
+        "options": {}
+      },
+      "id": "c276ced8-b5b9-4a95-9f33-1e5b39e4b9da",
+      "name": "Django (Wake)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1632,
+        2896
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook (PR Lifecycle)": {
+      "main": [
+        [
+          {
+            "node": "Lookup Tenant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Tenant": {
+      "main": [
+        [
+          {
+            "node": "If PR Opened",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If PR Opened": {
+      "main": [
+        [
+          {
+            "node": "Deploy PR",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Destroy PR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deploy PR": {
+      "main": [
+        [
+          {
+            "node": "GitHub (Deployed)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub (Deployed)": {
+      "main": [
+        [
+          {
+            "node": "Django (Deploy)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook (Auto-Sleep)": {
+      "main": [
+        [
+          {
+            "node": "Idle Timeout (10m)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Idle Timeout (10m)": {
+      "main": [
+        [
+          {
+            "node": "Gatekeeper (Check AWS)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gatekeeper (Check AWS)": {
+      "main": [
+        [
+          {
+            "node": "Is Server Still Running?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Server Still Running?": {
+      "main": [
+        [
+          {
+            "node": "Auto-Hibernate AWS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auto-Hibernate AWS": {
+      "main": [
+        [
+          {
+            "node": "GitHub (Auto-Sleep)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub (Auto-Sleep)": {
+      "main": [
+        [
+          {
+            "node": "Django (Auto-Sleep)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Destroy PR": {
+      "main": [
+        [
+          {
+            "node": "GitHub Comment (Destroyed)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub Comment (Destroyed)": {
+      "main": [
+        [
+          {
+            "node": "Notify Django (Destroy)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook (Sleep)": {
+      "main": [
+        [
+          {
+            "node": "Hibernate AWS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hibernate AWS": {
+      "main": [
+        [
+          {
+            "node": "GitHub (Sleep)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub (Sleep)": {
+      "main": [
+        [
+          {
+            "node": "Django (Sleep)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook (Wake)": {
+      "main": [
+        [
+          {
+            "node": "Wake API Start",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wake API Start": {
+      "main": [
+        [
+          {
+            "node": "Wait For IP",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GitHub (Spot Reclaimed)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait For IP": {
+      "main": [
+        [
+          {
+            "node": "Wake API Describe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wake API Describe": {
+      "main": [
+        [
+          {
+            "node": "GitHub (Wake)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub (Wake)": {
+      "main": [
+        [
+          {
+            "node": "Django (Wake)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "22eba639-a890-4611-b1db-84fa87471e97",
+  "meta": {
+    "instanceId": "1cb29f4e098cb2f50947765c80a4fb4db32b4b77f643a5ca0cd9995d4ba2c5a6"
+  },
+  "id": "1dQtRXWkb4Y6xOvY",
+  "tags": []
+}

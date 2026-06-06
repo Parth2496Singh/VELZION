@@ -1,0 +1,10 @@
+### Test your Webhook
+POST http://localhost:8000/api/webhooks/github/ HTTP/1.1
+Content-Type: application/json
+x-velzion-secret: L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA
+
+{
+    "repo_url": "https://github.com/Parth2496Singh/velzion-test-app.git",
+    "pr_number": 1,
+    "status": "PROVISIONING"
+}
