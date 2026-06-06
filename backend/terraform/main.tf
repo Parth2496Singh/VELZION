@@ -47,7 +47,7 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
 
 # SPOT INSTANCES!
 resource "aws_spot_instance_request" "zegion_preview" {
-  ami                    = "ami-04b70fa74e45c3917" # Ubuntu 24.04 LTS
+  ami                    = "ami-032712f546eba341c" # Ubuntu 24.04 LTS
   instance_type          = "t3.micro"
   spot_price             = "0.01"
   wait_for_fulfillment   = true
