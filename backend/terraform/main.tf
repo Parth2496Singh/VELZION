@@ -8,8 +8,11 @@ variable "pr_number" {
   type        = string
 }
 
+# 100% KEYLESS PROVIDER
 provider "aws" {
   region = "us-east-1"
+  # Terraform will automatically pull credentials from ~/.aws/credentials (locally)
+  # or the attached IAM Role (when running on EC2).
 }
 
 resource "aws_security_group" "zegion_sg" {
@@ -17,7 +20,6 @@ resource "aws_security_group" "zegion_sg" {
   description = "Allow HTTP and SSH inbound for PR preview"
 }
 
-# Web Traffic Rule
 resource "aws_vpc_security_group_ingress_rule" "allow_http_ipv4" {
   security_group_id = aws_security_group.zegion_sg.id
   cidr_ipv4         = "0.0.0.0/0"
@@ -27,7 +29,6 @@ resource "aws_vpc_security_group_ingress_rule" "allow_http_ipv4" {
   description       = "Anyone can access"
 }
 
-# SSH Lifeline Rule
 resource "aws_vpc_security_group_ingress_rule" "allow_ssh_ipv4" {
   security_group_id = aws_security_group.zegion_sg.id
   cidr_ipv4         = "0.0.0.0/0"
@@ -44,6 +45,7 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
   description       = "EC2 can connect to the whole world to download code"
 }
 
+# SPOT INSTANCES!
 resource "aws_spot_instance_request" "zegion_preview" {
   ami                    = "ami-04b70fa74e45c3917" # Ubuntu 24.04 LTS
   instance_type          = "t3.micro"
@@ -51,63 +53,58 @@ resource "aws_spot_instance_request" "zegion_preview" {
   wait_for_fulfillment   = true
   vpc_security_group_ids = [aws_security_group.zegion_sg.id]
 
-  # CRITICAL FIX: Expand the hard drive from 8GB to 20GB so Docker has room to breathe
+  # 🔥 THE OPTIMIZED ZEGION STATE-MACHINE UPGRADES 🔥
+  spot_type                      = "persistent"
+  instance_interruption_behavior = "stop"
+
   root_block_device {
     volume_size = 20
-    volume_type = "gp3" # gp3 is faster and cheaper than the older gp2
+    volume_type = "gp3" 
   }
 
   user_data = <<-EOF
-  #!/bin/bash
-  # 0. Force all logs to the AWS Console for debugging
-  exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
-  
-  export HOME=/root
-  
-  # 1. Clean out old distribution docker engines if they exist
-  apt-get remove -y docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc || true
-  apt-get autoremove -y || true
-
-  # 2. Update and install repository prerequisites
-  apt-get update -y
-  apt-get install -y ca-certificates curl gnupg git
-
-  # 3. Add official Docker GPG archive keyrings
-  install -m 0755 -d /etc/apt/keyrings
-  rm -f /etc/apt/keyrings/docker.gpg
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg
-  chmod a+r /etc/apt/keyrings/docker.gpg
-
-  # 4. Set up the stable official repository path
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-  # 5. Install the official production Docker Engine suite
-  apt-get update -y
-  apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-  # 6. Verify and boot the service daemon
-  systemctl enable docker
-  systemctl start docker
-  usermod -aG docker ubuntu
+              #!/bin/bash 
+              exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+              export HOME=/root
               
-  # 7. Install the absolute latest CNCF Pack CLI (v0.40.6) - Great catch!
-  curl -sSL "https://github.com/buildpacks/pack/releases/download/v0.40.6/pack-v0.40.6-linux.tgz" | tar -C /usr/local/bin/ --no-same-owner -xzv pack
-              
-  # 8. Clone the target repo and isolate the workspace
-  git clone ${var.repo_url} /app
-  cd /app
-              
-  # 9. Fetch the exact Pull Request code dynamically
-  git fetch origin pull/${var.pr_number}/head:pr-preview
-  git checkout pr-preview
+              apt-get remove -y docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc || true
+              apt-get autoremove -y || true
 
-  # 10. Compile into an OCI container image dynamically
-  pack build zegion-app --builder paketobuildpacks/builder-jammy-base
-              
-  # 11. Run the compiled application architecture on port 80
-  docker run -d -p 80:8080 zegion-app
-  EOF
+              apt-get update -y
+              apt-get install -y ca-certificates curl gnupg git
+
+              install -m 0755 -d /etc/apt/keyrings
+              rm -f /etc/apt/keyrings/docker.gpg
+              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg
+              chmod a+r /etc/apt/keyrings/docker.gpg
+
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+              $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+              apt-get update -y
+              apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+              systemctl enable docker
+              systemctl start docker
+              usermod -aG docker ubuntu
+                              
+              curl -sSL "https://github.com/buildpacks/pack/releases/download/v0.40.6/pack-v0.40.6-linux.tgz" | tar -C /usr/local/bin/ --no-same-owner -xzv pack
+                              
+              git clone ${var.repo_url} /app
+              cd /app
+                              
+              git fetch origin pull/${var.pr_number}/head:pr-preview
+              git checkout pr-preview
+
+              pack build zegion-app --builder paketobuildpacks/builder-jammy-base
+                              
+              docker run -d -p 80:8080 --name zegion-web --restart unless-stopped zegion-app
+              # This fires the exact millisecond the build finishes to trigger auto-hibernation.
+              curl -X POST http://54.86.145.100/api/webhooks/github/ \
+                -H "x-velzion-secret: L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA" \
+                -H "Content-Type: application/json" \
+                -d '{"repo_url": "'"${var.repo_url}"'", "pr_number": "'"${var.pr_number}"'", "status": "BUILT"}'
+              EOF
 }
 
 output "instance_id" {

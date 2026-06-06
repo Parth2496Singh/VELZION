@@ -1,5 +1,4 @@
 # STAGE 1: Builder
-
 FROM python:3.12-slim AS builder
 
 WORKDIR /app
@@ -12,7 +11,6 @@ COPY requirements.txt .
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
 # STAGE 2: Final Production Runner
-
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -32,4 +30,5 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+# THE ENTERPRISE FIX: Using Gunicorn instead of runserver with 3 worker processes
+CMD ["sh", "-c", "python manage.py migrate && gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3"]

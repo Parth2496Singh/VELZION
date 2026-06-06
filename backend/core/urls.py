@@ -19,6 +19,8 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Route all API traffic to the Zegion app
+    # 1. SPECIFIC ROUTE MUST GO FIRST:
+    path('api/auth/', include('users.urls')),
+    # 2. GENERAL ROUTE GOES SECOND:
     path('api/', include('zegion.urls')), 
 ]
