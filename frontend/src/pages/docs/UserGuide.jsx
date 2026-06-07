@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Server, ShieldCheck, ArrowRight, GitBranch, BarChart3, CloudCog } from 'lucide-react';
+import { Zap, Server, ShieldCheck, ArrowRight, GitBranch, BarChart3, CloudCog, Activity } from 'lucide-react';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -22,19 +22,50 @@ export default function UserGuide() {
       </header>
 
       {/* --- WHY VELZION --- */}
-      <section>
-        <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: 'var(--text-pure)' }}>Why Velzion over Vercel/Railway/Render?</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-          <div className="glass-panel" style={{ padding: '1.5rem' }}>
-            <h4 style={{ color: 'var(--text-pure)', marginBottom: '0.5rem' }}>Native Infrastructure Control</h4>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>Unlike abstracted PaaS providers, Velzion gives you direct access to your AWS VPC. You aren't trapped in a proprietary runtime; you own your terraform state, security groups, and compute lifecycle.</p>
-          </div>
-          <div className="glass-panel" style={{ padding: '1.5rem' }}>
-            <h4 style={{ color: 'var(--text-pure)', marginBottom: '0.5rem' }}>Aggressive Cost Culling</h4>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>While competitors charge per-instance/24-hour cycles, Zegion's Strict TTL and hibernating Spot instances ensure you pay only for active testing minutes.</p>
-          </div>
-        </div>
-      </section>
+{/* --- CORE VALUE METRICS --- */}
+<section>
+  <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: 'var(--text-pure)' }}>
+    Core Platform Advantages
+  </h2>
+
+  <div
+    style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+      gap: '1.2rem'
+    }}
+  >
+    {[
+      { label: 'No Vendor Lock-in', value: 'True portability across cloud providers' },
+      { label: '0 Platform Fees', value: 'No SaaS markup on usage' },
+      { label: '0 Vendor Compute Markup', value: 'Direct cloud billing only' },
+      { label: '70% Compute Cost Reduction', value: 'Optimized spot + scaling engine' },
+      { label: '73% Less Server Uptime Waste', value: 'Auto-sleep + TTL workloads' },
+      { label: '100% Data Redundancy', value: 'Multi-region replication by default' }
+    ].map((item) => (
+      <div
+        key={item.label}
+        className="glass-panel"
+        style={{ padding: '1.25rem' }}
+      >
+        <h3
+          style={{
+            color: 'var(--text-pure)',
+            fontSize: '0.95rem',
+            marginBottom: '0.4rem',
+            fontWeight: 700
+          }}
+        >
+          {item.label}
+        </h3>
+
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+          {item.value}
+        </p>
+      </div>
+    ))}
+  </div>
+</section>
 
       {/* --- GETTING STARTED --- */}
       <section>
