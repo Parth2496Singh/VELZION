@@ -5,7 +5,7 @@ pipeline {
     environment {
         SONAR_HOME = tool "Sonar"
         // This tag is the 'trigger' for ArgoCD Image Updater
-        IMAGE_TAG = "v1.0.${env.BUILD_NUMBER}"
+        IMAGE_TAG = "1.0.${env.BUILD_NUMBER}"
         REGISTRY_USER = "parthsingh2496"
     }
     
