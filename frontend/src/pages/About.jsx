@@ -27,6 +27,38 @@ export default function About() {
       position: 'relative',
       zIndex: 10
     }}>
+
+      {/* Purple Aurora */}
+<div
+  style={{
+    position: 'fixed',
+    top: '10%',
+    left: '-10%',
+    width: '500px',
+    height: '500px',
+    background:
+      'radial-gradient(circle, rgba(157,78,221,0.18), transparent 70%)',
+    filter: 'blur(80px)',
+    pointerEvents: 'none',
+    zIndex: -2
+  }}
+/>
+
+{/* Gold Aurora */}
+<div
+  style={{
+    position: 'fixed',
+    bottom: '10%',
+    right: '-10%',
+    width: '500px',
+    height: '500px',
+    background:
+      'radial-gradient(circle, rgba(245,203,92,0.15), transparent 70%)',
+    filter: 'blur(80px)',
+    pointerEvents: 'none',
+    zIndex: -2
+  }}
+/>
       
       {/* Navigation Header */}
       <motion.div 
@@ -84,6 +116,43 @@ export default function About() {
           </p>
         </motion.div>
 
+        <motion.div
+  variants={itemVariants}
+  style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))',
+    gap: '1rem',
+    marginBottom: '4rem'
+  }}
+>
+  <div className="glass-panel" style={{ padding: '1.5rem' }}>
+    <h2 style={{ fontSize: '2rem', marginBottom: '.5rem' }}>
+      &lt;4s
+    </h2>
+    <p style={{ color: 'var(--text-muted)' }}>
+      Preview Environment Creation
+    </p>
+  </div>
+
+  <div className="glass-panel" style={{ padding: '1.5rem' }}>
+    <h2 style={{ fontSize: '2rem', marginBottom: '.5rem' }}>
+      99.95%
+    </h2>
+    <p style={{ color: 'var(--text-muted)' }}>
+      Production Availability
+    </p>
+  </div>
+
+  <div className="glass-panel" style={{ padding: '1.5rem' }}>
+    <h2 style={{ fontSize: '2rem', marginBottom: '.5rem' }}>
+      40%
+    </h2>
+    <p style={{ color: 'var(--text-muted)' }}>
+      Reduced Infrastructure Waste
+    </p>
+  </div>
+</motion.div>
+
         {/* The Three Pillars */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
@@ -136,9 +205,192 @@ export default function About() {
 
         </div>
 
+        <motion.div
+  variants={itemVariants}
+  style={{
+    marginTop: '5rem'
+  }}
+>
+  <h2
+    style={{
+      fontSize: '2rem',
+      fontWeight: 700,
+      marginBottom: '2rem'
+    }}
+  >
+    Leadership
+  </h2>
+
+  <motion.div
+    whileHover={{
+      y: -6,
+      scale: 1.01
+    }}
+    className="glass-panel"
+    style={{
+      padding: '2.5rem',
+      background:
+        'linear-gradient(145deg, rgba(157,78,221,0.08), rgba(245,203,92,0.08))'
+    }}
+  >
+    <div
+      style={{
+        display: 'flex',
+        gap: '2rem',
+        alignItems: 'center',
+        flexWrap: 'wrap'
+      }}
+    >
+      <div
+        style={{
+          width: '90px',
+          height: '90px',
+          borderRadius: '50%',
+          background:
+            'linear-gradient(135deg,var(--zg-purple-core),var(--vz-gold-core))',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '2rem',
+          fontWeight: 800
+        }}
+      >
+        P
+      </div>
+
+      <div>
+        <h3
+          style={{
+            fontSize: '1.5rem',
+            marginBottom: '.5rem'
+          }}
+        >
+          Parth Singh Kushwaha
+        </h3>
+
+        <p
+          style={{
+            color: 'var(--vz-gold-core)',
+            marginBottom: '1rem'
+          }}
+        >
+          Team Lead • Cloud & DevOps Engineer
+        </p>
+
+        <p
+          style={{
+            color: 'var(--text-muted)',
+            lineHeight: 1.7,
+            maxWidth: '650px'
+          }}
+        >
+          Leading the cloud architecture, deployment automation,
+          infrastructure reliability, and operational strategy
+          that powers the Velzion ecosystem.
+        </p>
+      </div>
+    </div>
+  </motion.div>
+</motion.div>
+
+{/* Team Section */}
+<motion.div
+  variants={itemVariants}
+  style={{
+    marginTop: '5rem'
+  }}
+>
+  <h2
+    style={{
+      fontSize: '2rem',
+      fontWeight: 700,
+      marginBottom: '2rem'
+    }}
+  >
+    Core Team
+  </h2>
+
+  <div
+    style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+      gap: '1.5rem'
+    }}
+  >
+    {/* Tanishq Nigam */}
+    <motion.div
+      whileHover={{ y: -6 }}
+      className="glass-panel"
+      style={{ padding: '2rem' }}
+    >
+      <h3 style={{ fontSize: '1.3rem', marginBottom: '0.5rem' }}>
+        Tanishq Nigam
+      </h3>
+      <p style={{ color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+        Frontend Developer
+      </p>
+      <p style={{ color: 'var(--text-muted)', lineHeight: 1.6 }}>
+        Builds high-performance UI systems and contributes to the Obsidian Canvas design system.
+      </p>
+    </motion.div>
+
+    {/* Gunjit Verma */}
+    <motion.div
+      whileHover={{ y: -6 }}
+      className="glass-panel"
+      style={{ padding: '2rem' }}
+    >
+      <h3 style={{ fontSize: '1.3rem', marginBottom: '0.5rem' }}>
+        Gunjit Verma
+      </h3>
+      <p style={{ color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+        Backend Developer
+      </p>
+      <p style={{ color: 'var(--text-muted)', lineHeight: 1.6 }}>
+        Engineers scalable APIs, authentication flows, and cloud orchestration logic powering Velzion services.
+      </p>
+    </motion.div>
+
+    {/* Shreyash Rawat */}
+    <motion.div
+      whileHover={{ y: -6 }}
+      className="glass-panel"
+      style={{ padding: '2rem' }}
+    >
+      <h3 style={{ fontSize: '1.3rem', marginBottom: '0.5rem' }}>
+        Shreyash Rawat
+      </h3>
+      <p style={{ color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+        AI/ML Engineer
+      </p>
+      <p style={{ color: 'var(--text-muted)', lineHeight: 1.6 }}>
+        Works on intelligent automation, predictive scaling systems, and future AI-driven cloud optimization.
+      </p>
+    </motion.div>
+
+  </div>
+</motion.div>
+
         {/* Call to Action */}
         <motion.div variants={itemVariants} style={{ marginTop: '5rem', textAlign: 'center', paddingBottom: '4rem' }}>
-          <h4 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' }}>Ready to deploy?</h4>
+          <h4
+  style={{
+    fontSize: '2rem',
+    fontWeight: 700,
+    marginBottom: '1rem'
+  }}
+>
+  Build. Preview. Deploy.
+</h4>
+
+<p
+  style={{
+    color: 'var(--text-muted)',
+    marginBottom: '2rem'
+  }}
+>
+  All from a single platform.
+</p>
           <Link to="/login" className="glass-panel flex-center" style={{ 
             display: 'inline-flex',
             padding: '0.75rem 2rem', 
