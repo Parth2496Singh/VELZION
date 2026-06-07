@@ -50,8 +50,8 @@ pipeline {
                     dir('frontend') {
                         sh """
                         docker build \\
-                          --build-arg VITE_API_BASE_URL=http://${env.APP_DOMAIN}/api \\
-                          --build-arg VITE_N8N_WEBHOOK_URL=http://${env.APP_DOMAIN}/n8n/webhook \\
+                          --build-arg VITE_API_BASE_URL=http://54.86.145.100 \\
+                          --build-arg VITE_N8N_WEBHOOK_URL=http://54.86.145.100/n8n/webhook \\
                           -t velzion-frontend:${env.IMAGE_TAG} . 
                         """
                         dockerhub_push("velzion-frontend", "${env.IMAGE_TAG}", "${env.REGISTRY_USER}")
