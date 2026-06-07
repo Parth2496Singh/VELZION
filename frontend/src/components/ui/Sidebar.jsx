@@ -100,23 +100,49 @@ export default function Sidebar() {
       flexShrink: 0
     }}>
       
-      {/* Brand Header */}
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '0.75rem', 
-        marginBottom: '2.5rem',
-        paddingLeft: '0.5rem'
-      }}>
-        <Hexagon size={28} style={{ color: 'var(--text-pure)' }} />
-        <span style={{ 
-          fontSize: '1.25rem', 
-          fontWeight: 700, 
-          letterSpacing: '0.05em' 
-        }}>
-          VELZION
-        </span>
-      </div>
+{/* Brand Header */}
+<Link
+  to="/"
+  style={{
+    textDecoration: 'none',
+    color: 'inherit'
+  }}
+>
+  <motion.div
+    whileHover={{
+      scale: 1.03,
+      x: 2
+    }}
+    whileTap={{
+      scale: 0.98
+    }}
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem',
+      marginBottom: '2.5rem',
+      paddingLeft: '0.5rem',
+      cursor: 'pointer'
+    }}
+  >
+    <Hexagon
+      size={28}
+      style={{
+        color: 'var(--text-pure)'
+      }}
+    />
+
+    <span
+      style={{
+        fontSize: '1.25rem',
+        fontWeight: 700,
+        letterSpacing: '0.05em'
+      }}
+    >
+      VELZION
+    </span>
+  </motion.div>
+</Link>
 
       {/* Engine Switcher */}
       <div style={{ marginBottom: '2rem' }}>
