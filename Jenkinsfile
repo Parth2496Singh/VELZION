@@ -49,10 +49,10 @@ pipeline {
                     // We point to the Load Balancer URL we fetched earlier
                     dir('frontend') {
                         sh """
-                        docker build \
-                          --build-arg VITE_API_BASE_URL=http://${env.APP_DOMAIN}/api \
-                          --build-arg VITE_N8N_WEBHOOK_URL=http://${env.APP_DOMAIN}/n8n/webhook \
-                          -t ${env.REGISTRY_USER}/velzion-frontend:${env.IMAGE_TAG} .
+                        docker build \\
+                          --build-arg VITE_API_BASE_URL=http://${env.APP_DOMAIN}/api \\
+                          --build-arg VITE_N8N_WEBHOOK_URL=http://${env.APP_DOMAIN}/n8n/webhook \\
+                          -t velzion-frontend:${env.IMAGE_TAG} . 
                         """
                         dockerhub_push("velzion-frontend", "${env.IMAGE_TAG}", "${env.REGISTRY_USER}")
                     }
