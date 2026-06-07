@@ -1,6 +1,6 @@
 # 🚀 Velzion
 
-**Cloud-native orchestration for ephemeral preview environments.**
+**Cloud-native orchestration for ephemeral preview environment.**
 
 ### 🌐 Frontend
 [![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)](https://react.dev/)
