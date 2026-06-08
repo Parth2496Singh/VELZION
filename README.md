@@ -1,137 +1,121 @@
-# 🚀 Velzion
+<div align="center">
 
-**Cloud-native orchestration for ephemeral preview environment.**
+# 🚀 Project Velzion
+**The Open-Source BYOC Control Plane for Automated Deployments & Ephemeral Environments**
 
-### 🌐 Frontend
-[![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![React Router](https://img.shields.io/badge/React%20Router-CA4245?style=flat-square&logo=react-router&logoColor=white)](https://reactrouter.com/)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
+[![Stack](https://img.shields.io/badge/Stack-Django%20%7C%20React%20%7C%20n8n-blue.svg)](#)
+[![AWS](https://img.shields.io/badge/AWS-BYOC-FF9900.svg)](#)
+[![GitOps](https://img.shields.io/badge/GitOps-ArgoCD%20%7C%20Helm-purple.svg)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#)
 
-### ⚙️ Backend & Orchestration
-[![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Django](https://img.shields.io/badge/Django-092E20?style=flat-square&logo=django&logoColor=white)](https://www.djangoproject.com/)
-[![n8n](https://img.shields.io/badge/n8n-EA4B71?style=flat-square&logo=n8n&logoColor=white)](https://n8n.io/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+Modern cloud development is caught in a paradox: developers crave the flawless, zero-configuration deployment experiences of modern PaaS providers, while startups face brutal pricing markups, lack of deep database isolation, and severe data privacy risks on shared platforms. 
 
-### ☁️ Infrastructure & Cloud Engine
-[![AWS](https://img.shields.io/badge/AWS-232F3E?style=flat-square&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
-[![AWS EC2](https://img.shields.io/badge/AWS%20EC2-FF9900?style=flat-square&logo=amazonec2&logoColor=white)](https://aws.amazon.com/ec2/)
-[![Terraform](https://img.shields.io/badge/Terraform-623CE4?style=flat-square&logo=terraform&logoColor=white)](https://www.terraform.io/)
-[![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Paketo Buildpacks](https://img.shields.io/badge/Paketo%20Buildpacks-0052CC?style=flat-square&logo=cncf&logoColor=white)](https://paketo.io/)
+**Velzion resolves this tension.** As an enterprise-grade, open-source Bring Your Own Cloud (BYOC) DevOps Control Plane, Velzion acts strictly as an orchestration brain—it owns zero compute. It turns a company’s private AWS infrastructure into a self-hosted, automated app platform, guaranteeing 100% data residency and zero vendor premium markups.
 
-### 🛡️ Governance & Philosophy
-[![FinOps](https://img.shields.io/badge/FinOps-Cost%20Optimization-4A37A0?style=flat-square)](https://www.finops.org/)
-[![DevOps](https://img.shields.io/badge/DevOps-Automation-3F51B5?style=flat-square)]()
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+</div>
 
 ---
 
-**Velzion** is a Zero-CI control plane that dynamically provisions isolated, ephemeral preview environments for pull requests. Built on Terraform and Paketo Buildpacks, it automatically negotiates AWS Spot compute and compiles OCI-compliant containers directly from source code. 
+## 🛑 The Problem
 
-> **Latest Upgrade:** Velzion now features a multi-page React SPA architecture, including an interactive FinOps ROI Calculator that proves the financial impact of eliminating 24/7 "zombie" staging servers.
-
----
-
-## 📖 Table of Contents
-* [Architecture & Stack](#-architecture--stack)
-* [Key Features](#-key-features)
-* [Setup & Installation](#%EF%B8%8F-setup--installation)
-* [Usage](#-usage)
-* [Roadmap & Future Vision](#-roadmap--future-vision)
+Small to mid-sized engineering teams struggle with two massive operational bottlenecks:
+1. **The PaaS Financial Markup Trap:** Hosted platforms charge massive premium markups over raw AWS compute costs, draining early-stage startup capital.
+2. **The Persistent Staging Server Waste:** To avoid high bills, teams use a single, shared staging server. This creates massive developer friction: migration conflicts, overwritten branches, blocked QA cycles, and thousands of dollars wasted on idle compute hours.
 
 ---
 
-## 🚀 Architecture & Stack
+## 🚂 The Solution: Dual-Engine BYOC Architecture
 
-**Velzion MVP** is a fully containerized microservice platform:
+Velzion orchestrates infrastructure directly inside the user's secure AWS environment using a decoupled, event-driven architecture split into two execution pipelines:
 
-| Layer | Technology Stack | Purpose |
-| :--- | :--- | :--- |
-| **Frontend** | React + Vite | Served via ultra-fast Nginx |
-| **Backend** | Django API (Python) | Core control plane & telemetry management |
-| **Orchestrator** | n8n (Node.js) | Advanced workflow engine with elevated execution permissions |
-| **Database** | PostgreSQL 15 | Persistent application state |
-| **IaC** | Terraform | Dynamic auto-provisioning of AWS Spot Instances |
+* 🏗️ **Velzard (The Production Engine):** For core workloads requiring 24/7 high availability, Velzard automates infrastructure provisioning directly inside the user's AWS account. It configures dedicated EC2 On-Demand resources, Nginx reverse proxy routing, and launches the application via production-hardened configurations.
+* 🌪️ **Zegion (The Ephemeral Preview Engine):** Eliminates the single staging server bottleneck entirely. Powered by **n8n** as the automation engine, Zegion listens for GitHub Pull Request events, dynamically boots ultra-cheap AWS Spot instances, compiles code using CNCF Buildpacks, posts a live wildcard preview link to the PR comments, and tears the infrastructure down the second the PR is closed.
 
 ---
 
-## ✨ Key Features
+## 💡 Operational Innovations & FinOps Strategy
 
-* **Zero-CI Deployments:** No Dockerfiles, no YAML pipelines. Just paste a repo URL and PR number.
-* **Radical FinOps (~58.7% Base Savings):** Leverages AWS Spot Instances for ephemeral workloads, automatically terminating them to guarantee zero idle waste.
-* **Interactive ROI Calculator:** Built-in predictive modeling to compare traditional 24/7 "zombie" staging server costs against Velzion's ephemeral lifecycle, frequently demonstrating 99%+ total compute reductions.
-* **Dynamic Workspace Isolation:** Safely handles concurrent deployment requests via n8n directory orchestration.
-* **Instant Teardown:** 1-click destruction wipes the infrastructure from existence, leaving no unpatched preview apps exposed to the internet.
+* **Two-Tier Zero-Cost Networking:** Tier 1 Terraform provisions a custom VPC with a pure Public Subnet and Internet Gateway. Because it avoids NAT Gateways, idle networking costs exactly **$0.00**. Tier 2 dynamically drops ephemeral Spot instances into this pre-built VPC.
+* **Deterministic CNCF Buildpacks:** Zegion utilizes the official CNCF `pack` CLI and `paketobuildpacks/builder-jammy-base` to automatically detect repository language and compile an optimized, OCI-compliant container image—bypassing manual Dockerfiles entirely.
+* **Scale-to-Zero Preview Lifecycle:** Ephemeral environments have a strict TTL expiration. When a PR sits idle, n8n auto-destructs the Spot instance and updates its state to `SLEEPING`, guaranteeing a true zero-dollar idle cost profile.
+* **ChatOps & Security by Obscurity:** PR links utilize cryptographically hashed wildcard URLs (e.g., `pr-42-x7f9a2p.velzion.dev`). To wake a sleeping PR, developers simply type `/velzion wake` in the GitHub PR comments, and a fresh instance boots automatically within 60 seconds.
 
 ---
 
-## 🛠️ Setup & Installation
+## 🏛️ System Architecture
 
-> **Note:** This project is completely containerized. You do not need Node, Python, or Postgres installed on your local machine—only **Docker Desktop**.
+### Backend Structure & Modular Boundaries
+Velzion enforces strict domain boundaries using a **Modular Monolith** architecture built on Django, exposing strict RESTful endpoints.
+* `backend/users/`: Handles GitHub OAuth and JWT issuance.
+* `backend/velzard/`: Manages the persistent BYOC deployments and IAM state.
+* `backend/zegion/`: The ingestion point for GitHub webhooks and TTL logic.
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/Parth2496Singh/velzion-mvp.git
-cd velzion-mvp
+### Database Strategy
+Django acts as the central State Machine backed by a single **PostgreSQL** database. Multi-tenancy isolation is enforced logically via tenant foreign keys, tracking repository metadata, VPC IDs, and AWS Role ARNs.
+
+### The 1-Click Trust Model (Security)
+Velzion **never asks users to input raw AWS Access Keys**. 
+For deployment access, the React frontend redirects users to launch a pre-configured CloudFormation stack in their AWS console. This stack creates an IAM Role that explicitly trusts the central Velzion AWS account. When n8n executes Terraform, it calls AWS STS to assume the role, generating short-lived cryptographic tokens valid only for the deployment duration.
+
+---
+
+## 🐙 Zegion Orchestration Lifecycle
+
+1. Developer opens a PR ➔ GitHub fires a webhook to the Django API.
+2. Django writes `PROVISIONING` state to PostgreSQL and forwards the payload to n8n.
+3. n8n executes Tier 2 Terraform using STS temporary credentials to boot an AWS EC2 Spot Instance.
+4. The instance boots via `user_data.sh`, installs Docker/Git/pack CLI, clones the PR branch, and executes CNCF Buildpack compilation.
+5. n8n queries the instance IP, maps the wildcard DNS proxy, and posts the live URL back to the PR comments.
+
+---
+
+## 📁 Repository Structure
+
+Velzion is split across two primary repositories to enforce strict GitOps separation of concerns between Application Code and Infrastructure State.
+
+### 2. Infrastructure Configuration [VELZION](https://github.com/Parth2496Singh/VELZION.git)
+```text
+velzion/
+├── frontend/               # React SPA (Vite, Tailwind)
+│   ├── src/pages/          # Velzard & Zegion Dashboards, FinOps, Auth
+│   └── nginx.conf          # Reverse proxy configuration
+├── backend/                # Django Control Plane
+│   ├── core/               # Django Settings & DRF Configuration
+│   ├── users/              # GitHub OAuth & User Profiles
+│   ├── velzard/            # Production BYOC Engine & API
+│   ├── zegion/             # Ephemeral Preview Engine & Webhooks
+│   └── terraform/          # IaC configurations (main.tf, velzard_main.tf)
+├── workflows/              # Exported n8n JSON pipelines (Zegion & Velzard)
+├── docker-compose.yml      # Local development cluster orchestration
+└── Jenkinsfile             # CI/CD Pipeline definition
 ```
-
-### 2. Configure AWS Credentials
-Velzion requires AWS IAM credentials to automatically provision EC2 Spot instances. Copy the provided environment template:
-```bash
-cp backend/.env.example backend/.env
+### Continuous Delivery:** [VELZION-GITOPS](https://github.com/Parth2496Singh/VELZION-GITOPS)
+```text
+velzion-gitops/
+├── Chart.yaml              # Helm chart metadata and dependencies
+├── gitops/                 # Continuous Delivery Configurations
+│   ├── applicationset-velzion.yaml  # ArgoCD ApplicationSet definition
+│   └── argocd-notifications-cm.yaml # Slack/Email deployment alerts
+├── templates/              # Kubernetes Manifests (Helm Templates)
+│   ├── backend-deployment.yaml      # Django control plane pods
+│   ├── db-statefulset.yaml          # PostgreSQL persistent volume claims
+│   ├── frontend-deployment.yaml     # React frontend pods
+│   ├── ingress.yaml                 # Nginx ingress routing rules
+│   ├── n8n-deployment.yaml          # n8n automation engine pods
+│   └── services.yaml                # Internal cluster networking
+└── values.yaml             # Environment-specific variable overrides
 ```
-*Open backend/.env and replace the placeholder values with your actual AWS keys.*
+## ☸️ Control Plane Infrastructure & CI/CD
+The core Velzion Control Plane operates as a cloud-native application deployed to Amazon EKS. Local development utilizes Docker Compose to orchestrate the monolith seamlessly.
 
-### 3. Launch the Platform
-Because of our custom Docker network and multi-stage builds, the entire architecture boots with a single command:
-```bash
-docker-compose up --build -d
-```
+**Continuous Integration**: Jenkins (Jenkinsfile) drives the DevSecOps pipeline, running SonarQube for static analysis and Trivy for container vulnerability scanning.
 
-### 4. Access the Services
-Once the database healthcheck passes and the containers are live, access the platform here:
+**Continuous Delivery**: Executed via ArgoCD monitoring the velzion-gitops repository. It pulls Helm manifested configurations directly into the EKS cluster via a strict GitOps model.
 
-* 🖥️ **User Dashboard (React):** http://localhost:5173
-* ⚙️ **API Control Plane (Django):** http://localhost:8000/api/environments/
-* 🔀 **FinOps Orchestrator (n8n):** http://localhost:5678
+**State Management**: Terraform execution states are securely bound to an AWS S3 remote backend to protect against pod restarts.
 
-### 5. Import the Automation Pipelines
-Because n8n data is isolated locally, you need to import the orchestration workflows on your first run:
-1. Open n8n at [http://localhost:5678](http://localhost:5678)
-2. Click **Add Workflow**, open the top-right menu, and select **Import from File**.
-3. Select `velzion-deploy-pipeline.json` from the `/workflows` directory. Save and **Publish** it.
-4. Repeat the process to import `velzion-destroy-pipeline.json`. Save and **Publish** it.
+**Observability**: System logs and container metrics are piped to AWS CloudWatch.
 
----
-
-## 💻 Usage
-
-### The Deployment Engine (`/`)
-1. Open the Velzion Dashboard.
-2. Input a target **GitHub Repository URL** and **Pull Request Number**.
-3. Click **Execute Buildpack Pipeline**.
-4. Monitor the status shift to `RUNNING` and click the generated **Live URL** to view the deployed preview environment.
-5. Observe the **Live FinOps Telemetry** tracking exact fractions of a cent saved.
-6. Click **Terminate Instance** to trigger the Terraform destroy sequence and halt billing.
-
-### The FinOps Calculator (`/finopscalculator`)
-1. Click the green "Open FinOps ROI Calculator" button in the top right.
-2. Adjust the sliders to mirror your team's current staging server footprint.
-3. View the projected Monthly Savings generated by adopting Velzion's ephemeral architecture.
-
----
-
-## 🗺 Roadmap & Future Vision
-
-The current MVP demonstrates the core Zero-CI orchestration engine for ephemeral preview environments. The next iteration of Velzion will evolve into a fully managed enterprise SaaS platform:
-
-* 🧩 **Velzard (The Production Engine):** For core production workloads requiring 24/7 high availability, Velzard automates infrastructure provisioning directly inside the user's AWS account. It securely configures dedicated Amazon EC2 On-Demand resources, provisions Nginx reverse proxy routing, and launches the application via production-hardened configurations.
-* ⚡ **Enterprise AWS Onboarding (1-Click CloudFormation):** Transitioning away from hardcoded IAM keys. Enterprise customers will use a 1-click AWS CloudFormation template to securely grant Velzion an `AssumeRole` ARN.
-* 🤖 **Official GitHub OAuth App:** Moving from manual URL inputs to a fully integrated GitHub App. Velzion will listen to native PR webhook events, automatically deploying environments and commenting the Live URL directly onto the GitHub PR timeline.
-* ☁️ **Fully Managed Cloud Control Plane:** Migrating the Velzion control plane (Django/React/n8n) from local execution to a highly available AWS EKS (Kubernetes) architecture for global scale.
-
----
-
-### 📄 License
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+## 📄 License
+This project is licensed under the MIT License - see the LICENSE file for details.
