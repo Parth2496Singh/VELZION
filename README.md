@@ -72,7 +72,7 @@ Velzion integrates a diverse set of modern tooling to synthesize application orc
 * **CI/CD Pipeline:** Jenkins (CI), ArgoCD (GitOps CD), Helm
 * **Security & Observability:** Trivy (Vulnerability Scanning), SonarQube (Static Analysis), AWS CloudWatch
 
-* ### The 1-Click Trust Model (Security)
+### The 1-Click Trust Model (Security)
 Velzion **never asks users to input raw AWS Access Keys**. 
 For deployment access, the React frontend redirects users to launch a pre-configured CloudFormation stack in their AWS console (with the required IAM policies securely hosted in an S3 bucket). This stack creates an IAM Role that explicitly trusts the central Velzion AWS account. When n8n executes Terraform, it calls AWS STS to assume the role, generating short-lived cryptographic tokens valid only for the deployment duration.
 
