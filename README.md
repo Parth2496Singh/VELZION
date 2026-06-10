@@ -54,23 +54,28 @@ Velzion orchestrates infrastructure directly inside the user's secure AWS enviro
 
 Velzion integrates a diverse set of modern tooling to synthesize application orchestration, infrastructure automation, and continuous delivery into a single platform.
 
-### Control Plane (The Brain)
+### Control Plane 
 * **Backend:** Django, Django REST Framework (DRF), Python
 * **Frontend:** React, Vite, Tailwind CSS
 * **Database (State):** PostgreSQL
 * **Event Broker / Workflow Engine:** n8n (Node-Based Workflow Automation)
 
-### Infrastructure Engine (The Muscle)
+### Infrastructure Engine 
 * **Infrastructure as Code (IaC):** Terraform, AWS CloudFormation (IAM Trust Delegation)
 * **Cloud Provider:** Amazon Web Services (AWS) - VPC, EC2 On-Demand, EC2 Spot Instances, S3 (State Backend)
 * **Compute Provisioning:** AWS STS (AssumeRole Credentials), Bash (`user_data.sh`)
 * **Compilation:** CNCF Buildpacks (`pack` CLI)
 
-### DevOps & Platform Engineering (The Delivery)
+### DevOps & Platform Engineering 
 * **Containerization:** Docker, Docker Compose
 * **Orchestration:** Kubernetes (Amazon EKS)
 * **CI/CD Pipeline:** Jenkins (CI), ArgoCD (GitOps CD), Helm
 * **Security & Observability:** Trivy (Vulnerability Scanning), SonarQube (Static Analysis), AWS CloudWatch
+
+* ### The 1-Click Trust Model (Security)
+Velzion **never asks users to input raw AWS Access Keys**. 
+For deployment access, the React frontend redirects users to launch a pre-configured CloudFormation stack in their AWS console (with the required IAM policies securely hosted in an S3 bucket). This stack creates an IAM Role that explicitly trusts the central Velzion AWS account. When n8n executes Terraform, it calls AWS STS to assume the role, generating short-lived cryptographic tokens valid only for the deployment duration.
+
 
 ## 🏛️ System Architecture
 
