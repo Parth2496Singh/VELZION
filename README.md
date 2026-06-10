@@ -1,7 +1,3 @@
-<div align="center">
-
-# 🚀 Project Velzion
-**The Open-Source BYOC Control Plane for Automated Deployments & Ephemeral Environments**
 
 <div align="center">
 
