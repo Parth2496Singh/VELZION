@@ -3,12 +3,19 @@
 # 🚀 Project Velzion
 **The Open-Source BYOC Control Plane for Automated Deployments & Ephemeral Environments**
 
+<div align="center">
+
+# 🚀 Project Velzion
+**The Open-Source BYOC Control Plane for Automated Deployments & Ephemeral Environments**
+
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
-[![Stack](https://img.shields.io/badge/Stack-Django%20%7C%20React%20%7C%20n8n-blue.svg)](#)
-[![AWS](https://img.shields.io/badge/AWS-BYOC-FF9900.svg)](#)
-[![GitOps](https://img.shields.io/badge/GitOps-ArgoCD%20%7C%20Helm-purple.svg)](#)
+[![Control Plane](https://img.shields.io/badge/Control_Plane-Django_%7C_React-blue.svg)](#)
+[![Orchestration Engine](https://img.shields.io/badge/Orchestrator-n8n-FF6600.svg)](#)
+[![Cloud Infrastructure](https://img.shields.io/badge/Cloud-AWS_%7C_BYOC-FF9900.svg)](#)
+[![GitOps](https://img.shields.io/badge/GitOps-ArgoCD_%7C_Helm-purple.svg)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#)
 
+</div>
 Modern cloud development is caught in a paradox: developers crave the flawless, zero-configuration deployment experiences of modern PaaS providers, while startups face brutal pricing markups, lack of deep database isolation, and severe data privacy risks on shared platforms. 
 
 **Velzion resolves this tension.** As an enterprise-grade, open-source Bring Your Own Cloud (BYOC) DevOps Control Plane, Velzion acts strictly as an orchestration brain—it owns zero compute. It turns a company’s private AWS infrastructure into a self-hosted, automated app platform, guaranteeing 100% data residency and zero vendor premium markups.
@@ -43,6 +50,28 @@ Velzion orchestrates infrastructure directly inside the user's secure AWS enviro
 
 ---
 
+## 🛠️ Tech Stack
+
+Velzion integrates a diverse set of modern tooling to synthesize application orchestration, infrastructure automation, and continuous delivery into a single platform.
+
+### Control Plane (The Brain)
+* **Backend:** Django, Django REST Framework (DRF), Python
+* **Frontend:** React, Vite, Tailwind CSS
+* **Database (State):** PostgreSQL
+* **Event Broker / Workflow Engine:** n8n (Node-Based Workflow Automation)
+
+### Infrastructure Engine (The Muscle)
+* **Infrastructure as Code (IaC):** Terraform, AWS CloudFormation (IAM Trust Delegation)
+* **Cloud Provider:** Amazon Web Services (AWS) - VPC, EC2 On-Demand, EC2 Spot Instances, S3 (State Backend)
+* **Compute Provisioning:** AWS STS (AssumeRole Credentials), Bash (`user_data.sh`)
+* **Compilation:** CNCF Buildpacks (`pack` CLI)
+
+### DevOps & Platform Engineering (The Delivery)
+* **Containerization:** Docker, Docker Compose
+* **Orchestration:** Kubernetes (Amazon EKS)
+* **CI/CD Pipeline:** Jenkins (CI), ArgoCD (GitOps CD), Helm
+* **Security & Observability:** Trivy (Vulnerability Scanning), SonarQube (Static Analysis), AWS CloudWatch
+
 ## 🏛️ System Architecture
 
 ### Backend Structure & Modular Boundaries
@@ -74,7 +103,7 @@ For deployment access, the React frontend redirects users to launch a pre-config
 
 Velzion is split across two primary repositories to enforce strict GitOps separation of concerns between Application Code and Infrastructure State.
 
-### 2. Infrastructure Configuration [VELZION](https://github.com/Parth2496Singh/VELZION.git)
+### 1. Infrastructure Configuration [VELZION](https://github.com/Parth2496Singh/VELZION.git)
 ```text
 velzion/
 ├── frontend/               # React SPA (Vite, Tailwind)
@@ -90,7 +119,7 @@ velzion/
 ├── docker-compose.yml      # Local development cluster orchestration
 └── Jenkinsfile             # CI/CD Pipeline definition
 ```
-### Continuous Delivery:** [VELZION-GITOPS](https://github.com/Parth2496Singh/VELZION-GITOPS)
+### 2. Continuous Delivery [VELZION-GITOPS](https://github.com/Parth2496Singh/VELZION-GITOPS)
 ```text
 velzion-gitops/
 ├── Chart.yaml              # Helm chart metadata and dependencies
