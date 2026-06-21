@@ -188,7 +188,9 @@ cp .env.example .env
 ```
 Open the `.env` file in your code editor. 
 - You don't need to change `DJANGO_SECRET_KEY` or `N8N_WEBHOOK_SECRET` for local use.
-- **Database:** Go to [Supabase](https://supabase.com/) or [Neon](https://neon.tech/), create a free Postgres database, and paste the credentials into the `DATABASE_URL` and `DB_POSTGRESDB_*` fields.
+- **Database:** Go to **[Neon.tech](https://neon.tech/)** (Highly Recommended) or Supabase to create a free Postgres database. 
+  - *If using Neon:* Just paste their standard connection string. It works out of the box (IPv4).
+  - *If using Supabase:* You **MUST** use their **"Shared Connection Pooler"** URL (Port 6543). Do NOT use the direct connection or dedicated pooler, as they are IPv6-only and will crash AWS EC2 instances.
 - **GitHub:** Go to GitHub -> Settings -> Developer Settings -> OAuth Apps. Create one with Homepage `http://localhost:5173` and Callback `http://localhost:5173/auth/callback`. Paste the Client ID and Secret into your `.env`. Create a Personal Access Token and paste it into `GITHUB_PAT`.
 
 **Step 3: Run the Application!**
@@ -207,6 +209,12 @@ docker-compose up --build
 
 <details>
 <summary><h3>☁️ Option 2: EC2 Production Setup (For Live Cloud Servers)</h3></summary>
+
+> **⚠️ CRITICAL AWS REQUIREMENT (SECURITY GROUPS)**
+> By default, AWS EC2 instances block all web traffic. Before you begin, go to your AWS Console -> EC2 -> Security Groups, and add **Inbound Rules** to allow:
+> - **HTTP (Port 80)** - For the React Frontend (Nginx)
+> - **Custom TCP (Port 8000)** - For the Django API
+> - **Custom TCP (Port 5678)** - For the n8n Webhook Engine
 
 **Step 1: Connect to your EC2 Server**
 SSH into your AWS EC2 instance (Ubuntu recommended):
@@ -237,7 +245,7 @@ nano .env
 ```
 Now fill in your `.env` file:
 - **Change** `DJANGO_SECRET_KEY` and `N8N_WEBHOOK_SECRET` to random, secure passwords!
-- **Database:** Paste your external Supabase/Neon PostgreSQL credentials.
+- **Database (CRITICAL IPv6 FIX):** Paste your Supabase/Neon credentials. **IF USING SUPABASE**, you MUST use the **IPv4 Connection Pooler URL (Port 6543)**. Standard AWS EC2 instances cannot route IPv6, and the direct port 5432 will throw a "Network is unreachable" error.
 - **GitHub:** Create a GitHub OAuth App with your EC2's Public IP (e.g., `http://54.12.34.56` and `http://54.12.34.56/auth/callback`) and paste the IDs. Paste your `GITHUB_PAT`.
 - **AWS Credentials:** Fill in `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` so Velzion can provision infrastructure.
 - **Frontend URLs:** Change `VITE_API_BASE_URL` and `VITE_N8N_WEBHOOK_URL` to your EC2's public IP (e.g., `http://54.12.34.56:8000`).

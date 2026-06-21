@@ -40,8 +40,8 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
 # 3. ALLOWED HOSTS
 # Converts our comma-separated .env string into a Python list
-allowed_hosts_env = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
-ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',')]
+allowed_hosts_env = os.environ.get('DJANGO_ALLOWED_HOSTS', '*')
+ALLOWED_HOSTS = ['*'] # Simplify BYOC deployment
 
 # 4. CORS ORIGINS (For the React Frontend)
 # Converts the comma-separated .env string into a Python list

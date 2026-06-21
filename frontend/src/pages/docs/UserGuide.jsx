@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Server, ShieldCheck, ArrowRight, GitBranch, BarChart3, CloudCog } from 'lucide-react';
+import { Zap, Server, ShieldCheck, ArrowRight, GitBranch, BarChart3, CloudCog, Activity } from 'lucide-react';
 
 const containerVariants = {
   hidden: { opacity: 0 },

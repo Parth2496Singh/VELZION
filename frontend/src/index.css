@@ -40,6 +40,32 @@
   --transition-smooth: 300ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
+/* --- LIGHT THEME OVERRIDES --- */
+[data-theme="light"] {
+  --bg-void: #f8f9fa;
+  --bg-surface: #ffffff;
+  --bg-glass: rgba(0, 0, 0, 0.03);
+  --bg-glass-hover: rgba(0, 0, 0, 0.06);
+
+  --text-pure: #111827;
+  --text-muted: #4b5563;
+  --text-dark: #ffffff;
+
+  --border-subtle: 1px solid rgba(0, 0, 0, 0.1);
+  --border-focus: 1px solid rgba(0, 0, 0, 0.2);
+
+  --zg-purple-core: #7c3aed;
+  --zg-purple-glow: rgba(124, 58, 237, 0.15);
+  --zg-purple-border: rgba(124, 58, 237, 0.3);
+
+  --vz-gold-core: #d97706;
+  --vz-gold-glow: rgba(217, 119, 6, 0.15);
+  --vz-gold-border: rgba(217, 119, 6, 0.3);
+
+  --shadow-void: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.05);
+}
+
 /* =========================================
    RESET & BASE STYLES
    ========================================= */

@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Zap, Server, Shield, Terminal, Hexagon } from 'lucide-react';
+import { ArrowRight, Zap, Server, Shield, Terminal, Hexagon, Moon, Sun, Github, CheckCircle2 } from 'lucide-react';
 
-// Framer Motion Variants for Staggered Animations
 const containerVariants = {
   hidden: { opacity: 0 },
   show: {
@@ -18,6 +17,16 @@ const itemVariants = {
 };
 
 export default function Landing() {
+  const [isLightMode, setIsLightMode] = useState(false);
+
+  useEffect(() => {
+    if (isLightMode) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+  }, [isLightMode]);
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -27,7 +36,7 @@ export default function Landing() {
       padding: '2rem'
     }}>
       
-      {/* Minimal Public Header */}
+      {/* Navbar */}
       <motion.header 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -45,21 +54,24 @@ export default function Landing() {
       >
         <div className="flex-center" style={{ gap: '0.75rem' }}>
           <Hexagon size={28} style={{ color: 'var(--text-pure)' }} />
-          <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '0.05em' }}>
+          <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '0.05em', color: 'var(--text-pure)' }}>
             VELZION
           </span>
         </div>
         
         <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+          <a href="https://github.com/Parth2496Singh/VELZION" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-muted)', transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-pure)'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}>
+            <Github size={20} />
+          </a>
+          
+          <button onClick={() => setIsLightMode(!isLightMode)} style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', transition: 'color var(--transition-fast)' }} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-pure)'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}>
+            {isLightMode ? <Moon size={20} /> : <Sun size={20} />}
+          </button>
+          
           <Link to="/docs" style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 500, transition: 'color var(--transition-fast)' }}
                 onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-pure)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}>
             Documentation
-          </Link>
-          <Link to="/about" style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 500, transition: 'color var(--transition-fast)' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-pure)'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}>
-            About
           </Link>
           <Link to="/login" className="glass-panel flex-center" style={{ 
             padding: '0.5rem 1.25rem', 
@@ -86,10 +98,11 @@ export default function Landing() {
           alignItems: 'center',
           justifyContent: 'center',
           textAlign: 'center',
-          maxWidth: '1000px',
+          maxWidth: '1200px',
           margin: '0 auto',
           zIndex: 10,
-          paddingTop: '4rem'
+          paddingTop: '4rem',
+          paddingBottom: '4rem'
         }}
       >
         <motion.div variants={itemVariants} style={{
@@ -109,11 +122,12 @@ export default function Landing() {
         </motion.div>
 
         <motion.h1 variants={itemVariants} style={{
-          fontSize: 'clamp(3rem, 6vw, 5rem)',
+          fontSize: 'clamp(3rem, 6vw, 5.5rem)',
           fontWeight: 800,
           lineHeight: 1.1,
           letterSpacing: '-0.02em',
-          marginBottom: '1.5rem'
+          marginBottom: '1.5rem',
+          color: 'var(--text-pure)'
         }}>
           Uncompromising Cloud.<br />
           <span style={{ color: 'var(--text-muted)' }}>Engineered for </span>
@@ -121,66 +135,130 @@ export default function Landing() {
         </motion.h1>
 
         <motion.p variants={itemVariants} style={{
-          fontSize: '1.1rem',
+          fontSize: '1.15rem',
           color: 'var(--text-muted)',
-          maxWidth: '600px',
+          maxWidth: '650px',
           lineHeight: 1.6,
           marginBottom: '3.5rem'
         }}>
-          Velzion delivers ephemeral preview environments and high-availability production clusters on a single, unified Obsidian Canvas.
+          Velzion delivers ephemeral preview environments and high-availability production clusters on a single, unified BYOC Obsidian Canvas. Zero proprietary lock-in.
         </motion.p>
 
-        {/* Engine Feature Cards */}
+        {/* Engine Feature Cards with Navigation Buttons */}
         <motion.div variants={containerVariants} style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '1.5rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: '2rem',
           width: '100%',
-          maxWidth: '800px'
+          marginBottom: '5rem'
         }}>
           
           {/* Zegion Engine Card */}
           <motion.div variants={itemVariants} className="glass-panel" style={{
-            padding: '2rem',
+            padding: '2.5rem',
             textAlign: 'left',
             position: 'relative',
             overflow: 'hidden',
-            cursor: 'default'
+            display: 'flex',
+            flexDirection: 'column'
           }}>
             <div style={{ position: 'absolute', top: '-20%', right: '-10%', width: '150px', height: '150px', background: 'radial-gradient(circle, var(--zg-purple-glow) 0%, transparent 70%)', filter: 'blur(40px)', zIndex: 0 }} />
-            <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{ position: 'relative', zIndex: 1, flex: 1 }}>
               <div style={{ display: 'inline-flex', padding: '0.75rem', borderRadius: 'var(--radius-md)', backgroundColor: 'rgba(157, 78, 221, 0.1)', border: '1px solid var(--zg-purple-border)', color: 'var(--zg-purple-core)', marginBottom: '1.5rem' }}>
                 <Zap size={24} />
               </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }} className="text-gradient-zegion">Zegion Engine</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5 }}>
-                Deploy ephemeral, isolated preview environments in milliseconds. Perfect for PR reviews and staging branches.
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem' }} className="text-gradient-zegion">Zegion Engine</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '2rem' }}>
+                Deploy ephemeral, isolated preview environments in milliseconds. Powered by n8n workflow automation and cheap AWS Spot Instances for absolute maximum FinOps ROI.
               </p>
             </div>
+            <Link to="/zegion" style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+              width: '100%', padding: '1rem', borderRadius: 'var(--radius-sm)',
+              background: 'var(--zg-purple-core)', color: '#fff', fontWeight: 700,
+              textTransform: 'uppercase', letterSpacing: '0.05em', zIndex: 1,
+              transition: 'background 0.2s', textDecoration: 'none'
+            }} onMouseEnter={(e) => e.currentTarget.style.background = '#7b2cbf'} onMouseLeave={(e) => e.currentTarget.style.background = 'var(--zg-purple-core)'}>
+              Enter Zegion <ArrowRight size={18} />
+            </Link>
           </motion.div>
 
           {/* Velzard Engine Card */}
           <motion.div variants={itemVariants} className="glass-panel" style={{
-            padding: '2rem',
+            padding: '2.5rem',
             textAlign: 'left',
             position: 'relative',
             overflow: 'hidden',
-            cursor: 'default'
+            display: 'flex',
+            flexDirection: 'column'
           }}>
             <div style={{ position: 'absolute', top: '-20%', right: '-10%', width: '150px', height: '150px', background: 'radial-gradient(circle, var(--vz-gold-glow) 0%, transparent 70%)', filter: 'blur(40px)', zIndex: 0 }} />
-            <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{ position: 'relative', zIndex: 1, flex: 1 }}>
               <div style={{ display: 'inline-flex', padding: '0.75rem', borderRadius: 'var(--radius-md)', backgroundColor: 'rgba(245, 203, 92, 0.1)', border: '1px solid var(--vz-gold-border)', color: 'var(--vz-gold-core)', marginBottom: '1.5rem' }}>
                 <Server size={24} />
               </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }} className="text-gradient-velzard">Velzard Engine</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5 }}>
-                High-availability production clusters designed for zero-downtime, infinite scaling, and absolute reliability.
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem' }} className="text-gradient-velzard">Velzard Engine</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '2rem' }}>
+                Granular infrastructure configuration. Select exact EC2 instances, EBS storage volumes, and deploy 24/7 highly available production clusters natively in your VPC.
               </p>
             </div>
+            <Link to="/velzard" style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+              width: '100%', padding: '1rem', borderRadius: 'var(--radius-sm)',
+              background: 'var(--vz-gold-core)', color: '#000', fontWeight: 800,
+              textTransform: 'uppercase', letterSpacing: '0.05em', zIndex: 1,
+              transition: 'background 0.2s', textDecoration: 'none'
+            }} onMouseEnter={(e) => e.currentTarget.style.background = '#d4af37'} onMouseLeave={(e) => e.currentTarget.style.background = 'var(--vz-gold-core)'}>
+              Enter Velzard <ArrowRight size={18} />
+            </Link>
           </motion.div>
 
         </motion.div>
+
+        {/* Detailed Features Section */}
+        <motion.div variants={itemVariants} style={{ width: '100%', textAlign: 'left', marginTop: '3rem' }}>
+          <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '2rem', textAlign: 'center', color: 'var(--text-pure)' }}>Enterprise Architecture</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+            
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <Shield size={24} style={{ color: 'var(--vz-gold-core)', marginBottom: '1rem' }} />
+              <h4 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-pure)' }}>Keyless AssumeRole</h4>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5 }}>Never share your AWS root keys. Velzion uses dynamic STS AssumeRole via CloudFormation trusts for absolute security.</p>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <Terminal size={24} style={{ color: 'var(--zg-purple-core)', marginBottom: '1rem' }} />
+              <h4 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-pure)' }}>CNCF Buildpacks</h4>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5 }}>Zero Dockerfile configuration needed. The system auto-detects your repository language and compiles OCI containers.</p>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <CheckCircle2 size={24} style={{ color: '#10b981', marginBottom: '1rem' }} />
+              <h4 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-pure)' }}>Live OTLP Telemetry</h4>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5 }}>Stream live CPU and RAM resource utilization matrices directly from your EC2 instances into the React dashboard.</p>
+            </div>
+
+          </div>
+        </motion.div>
+
       </motion.main>
+      
+      {/* Footer */}
+      <footer style={{
+        marginTop: 'auto',
+        padding: '2rem 0',
+        textAlign: 'center',
+        color: 'var(--text-muted)',
+        fontSize: '0.8rem',
+        borderTop: 'var(--border-subtle)',
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '1.5rem'
+      }}>
+        <span>&copy; {new Date().getFullYear()} Velzion Platform. Open Source BYOC.</span>
+        <a href="https://github.com/Parth2496Singh/VELZION" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>GitHub Repository</a>
+      </footer>
+
     </div>
   );
 }
