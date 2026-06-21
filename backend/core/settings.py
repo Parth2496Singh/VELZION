@@ -50,6 +50,9 @@ CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_env.split(',')
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 
+# 5. CSRF TRUSTED ORIGINS (Crucial for cross-origin POST requests)
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in cors_origins_env.split(',')]
+
 # (Keep your GitHub Client IDs below this as they were)
 GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID')
 GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET')
