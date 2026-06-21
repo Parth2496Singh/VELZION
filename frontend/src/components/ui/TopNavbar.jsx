@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { Search, Bell, Settings, User, ChevronRight } from 'lucide-react';
 
 // Reusable Icon Button
@@ -140,6 +140,23 @@ export default function TopNavbar() {
             margin: '0 0.5rem'
           }} />
           
+          <Link to="/Iam-login-page" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.4rem 0.75rem',
+            borderRadius: 'var(--radius-pill)',
+            border: '1px solid var(--vz-gold-border)',
+            background: 'var(--vz-gold-glow)',
+            color: 'var(--vz-gold-core)',
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            textDecoration: 'none',
+            marginRight: '0.5rem'
+          }}>
+            IAM Login
+          </Link>
+
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', paddingLeft: '0.5rem' }}>
               {user.avatar ? (

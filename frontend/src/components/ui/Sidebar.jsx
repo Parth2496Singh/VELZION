@@ -8,7 +8,8 @@ import {
   LayoutDashboard, 
   TerminalSquare, 
   DollarSign, 
-  BookOpen 
+  BookOpen,
+  Shield
 } from 'lucide-react';
 
 // Reusable navigation item with Framer Motion active state physics
@@ -209,6 +210,22 @@ export default function Sidebar() {
           <Zap size={18} />
           <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>n8n Orchestrator</span>
         </a>
+
+        <Link to="/Iam-login-page" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          padding: '0.75rem 1rem',
+          color: 'var(--text-muted)',
+          transition: 'color var(--transition-fast)',
+          textDecoration: 'none'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--vz-gold-core)'}
+        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+        >
+          <Shield size={18} />
+          <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>Enterprise IAM Auth</span>
+        </Link>
 
         <Link to="/" style={{
           display: 'flex',

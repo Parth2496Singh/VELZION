@@ -250,6 +250,7 @@ Now fill in your `.env` file:
 - **AWS Credentials:** Fill in `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` so Velzion can provision infrastructure.
 - **Frontend URLs:** Change `VITE_API_BASE_URL` to your backend API URL (e.g., `http://13.221.146.6:8000`). Change `VITE_N8N_WEBHOOK_URL` to your n8n URL (e.g., `http://13.221.146.6:5678`).
 - **Backend URL for GitHub Auth:** Ensure `FRONTEND_URL` is set to exactly your EC2 public IP without a trailing slash (e.g., `FRONTEND_URL=http://13.221.146.6`). This is CRITICAL for GitHub OAuth redirect matching.
+- **n8n Host Binding (CRITICAL):** You MUST set `N8N_HOST=0.0.0.0` inside your `.env` file! If it is left as `localhost`, n8n will refuse all external connections and the port will appear closed.
 - Press `CTRL+X`, then `Y`, then `Enter` to save and exit nano.
 
 **Step 5: Run the Production Build!**
