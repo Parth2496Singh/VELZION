@@ -263,7 +263,32 @@ docker-compose -f docker-compose.prod.yml up -d --build
 **Step 6: Access Velzion**
 Open your web browser and go to your EC2's Public IP address! (e.g., `http://54.12.34.56`)
 
+**Step 7: Import & Activate n8n Workflows**
+For Velzion to orchestrate infrastructure, n8n needs its instructions.
+1. Go to your n8n dashboard (`http://your-ec2-ip:5678`) and complete the initial owner setup.
+2. Go to **Workflows** -> **Add Workflow** -> **Import from File**.
+3. Import `VELZARD-WORKFLOW.json` and `ZEGION WORKFLOW.json` from the `workflows/` directory in this repo.
+4. **CRITICAL:** Toggle the switch in the top right corner of the n8n UI from **Inactive** to **Active**. If you don't do this, Django will get a `404 Not Found` when trying to trigger deployments!
+
 </details>
+
+---
+
+## 🤖 How the n8n Orchestration Workflows Actually Work
+
+Velzion uses **n8n** as a powerful, visual, node-based orchestration engine. Instead of writing thousands of lines of complex Python background tasks, n8n handles the state machine and AWS API interactions.
+
+### 🌪️ Zegion Workflow (The PR Preview Engine)
+1. **The Webhook Trigger:** Django receives a PR event from GitHub and forwards it to n8n via an internal Docker network request to `http://n8n:5678/webhook/zegion-pr`.
+2. **The "Gatekeeper" Branch:** n8n checks the action. If `opened`, it moves to deploy. If `closed`, it routes to the teardown sequence.
+3. **The Execute Command Node (Terraform):** n8n dynamically creates a folder (`workspace_pr_123`), copies the baseline `main.tf` into it, and runs `terraform apply -var="pr_number=123"`. 
+4. **Metadata Extraction & Callbacks:** n8n extracts the live `public_ip` from the Terraform output JSON. It fires two simultaneous API requests: one to GitHub to comment the live link, and one to Django to update the DB state to `RUNNING`.
+5. **The FinOps TTL Node:** Simultaneously, a parallel execution branch enters a **Wait Node** for 10 minutes. Once 10 minutes pass, it hits the AWS EC2 API to gracefully hibernate (`StopInstances`) the Spot instance, saving 100% of compute costs while preserving disk state.
+
+### 🏗️ Velzard Workflow (The Production Engine)
+1. **The Ignite Trigger:** Clicking "Ignite" in the React UI triggers Django to send the validated YAML contract (CPU limits, volume size) to the `webhook/velzard-deploy` n8n endpoint.
+2. **Infrastructure Compilation:** n8n passes these specific arguments into `terraform apply` using the `velzard_main.tf` template.
+3. **AWS State Sync:** n8n extracts the permanent `instance_id` and `elastic_ip` and securely updates the Django database so the telemetry engine can begin listening for OTLP streams from that exact hardware.
 
 ---
 

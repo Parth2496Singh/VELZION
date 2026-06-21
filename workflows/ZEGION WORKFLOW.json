@@ -19,7 +19,7 @@
     },
     {
       "parameters": {
-        "url": "={{ $env[\"BACKEND_INTERNAL_URL\"] }}/api/integrations/lookup/?repo_url={{ encodeURIComponent($json.body.repository.clone_url) }}",
+        "url": "=http://backend:8000/api/integrations/lookup/?repo_url={{ encodeURIComponent($json.body.repository.clone_url) }}",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -121,7 +121,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env[\"BACKEND_INTERNAL_URL\"] }}/api/webhooks/github/",
+        "url": "=http://backend:8000/api/webhooks/github/",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -193,7 +193,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env[\"BACKEND_INTERNAL_URL\"] }}/api/webhooks/github/",
+        "url": "=http://backend:8000/api/webhooks/github/",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -406,7 +406,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env[\"BACKEND_INTERNAL_URL\"] }}/api/webhooks/github/",
+        "url": "=http://backend:8000/api/webhooks/github/",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -523,7 +523,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env[\"BACKEND_INTERNAL_URL\"] }}/api/webhooks/github/",
+        "url": "=http://backend:8000/api/webhooks/github/",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -737,7 +737,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env[\"BACKEND_INTERNAL_URL\"] }}/api/webhooks/github/",
+        "url": "=http://backend:8000/api/webhooks/github/",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

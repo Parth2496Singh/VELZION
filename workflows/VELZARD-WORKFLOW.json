@@ -58,7 +58,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $env[\"BACKEND_INTERNAL_URL\"] }}/api/velzard/deployments/{{ $('Webhook (Deploy Trigger)').first().json.body.deployment_id }}/webhook_update/",
+        "url": "=http://backend:8000/api/velzard/deployments/{{ $('Webhook (Deploy Trigger)').first().json.body.deployment_id }}/webhook_update/",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -98,7 +98,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $env[\"BACKEND_INTERNAL_URL\"] }}/api/velzard/deployments/{{ $('Webhook (Deploy Trigger)').first().json.body.deployment_id }}/webhook_update/",
+        "url": "=http://backend:8000/api/velzard/deployments/{{ $('Webhook (Deploy Trigger)').first().json.body.deployment_id }}/webhook_update/",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
