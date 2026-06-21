@@ -208,8 +208,9 @@ routes:
     setExpandedRowId(expandedRowId === id ? null : id);
   };
 
-  const calculateUptime = (createdAt) => {
-    const diff = (new Date() - new Date(createdAt)) / 1000;
+  const calculateUptime = (ascendedAt) => {
+    if (!ascendedAt) return "00:00:00";
+    const diff = (new Date() - new Date(ascendedAt)) / 1000;
     if (diff < 0) return "00:00:00";
     const h = Math.floor(diff / 3600).toString().padStart(2, '0');
     const m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
@@ -217,8 +218,9 @@ routes:
     return `${h}:${m}:${s}`;
   };
 
-  const calculateCost = (createdAt) => {
-    const diffHours = (new Date() - new Date(createdAt)) / (1000 * 3600);
+  const calculateCost = (ascendedAt) => {
+    if (!ascendedAt) return "0.00000";
+    const diffHours = (new Date() - new Date(ascendedAt)) / (1000 * 3600);
     return (Math.max(0, diffHours) * 0.0208).toFixed(5);
   };
 
@@ -314,11 +316,11 @@ routes:
                                     </div>
                                     <div className="glass-panel" style={{ padding: '1.25rem' }}>
                                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}><Clock size={14} style={{ color: '#a78bfa' }} /> Storm Duration</div>
-                                      <div style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', fontWeight: 800, color: '#a78bfa', fontFamily: 'var(--font-mono)' }}>{calculateUptime(dep.created_at)}</div>
+                                      <div style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', fontWeight: 800, color: '#a78bfa', fontFamily: 'var(--font-mono)' }}>{calculateUptime(dep.ascended_at)}</div>
                                     </div>
                                     <div className="glass-panel" style={{ padding: '1.25rem', border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)' }}>
                                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}><DollarSign size={14} style={{ color: '#10b981' }} /> Accrued Energy Cost</div>
-                                      <div style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', fontWeight: 800, color: '#10b981', fontFamily: 'var(--font-mono)' }}>${calculateCost(dep.created_at)}</div>
+                                      <div style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', fontWeight: 800, color: '#10b981', fontFamily: 'var(--font-mono)' }}>${calculateCost(dep.ascended_at)}</div>
                                       <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem' }}>Rate: $0.0208 / hr</div>
                                     </div>
                                   </div>
@@ -332,8 +334,8 @@ routes:
                                       </div>
                                     </div>
                                     <div style={{ flex: 1, minHeight: '200px', position: 'relative' }}>
-                                      {dep.status === 'RUNNING' && metrics ? (
-                                        <TelemetryChart data={metrics.cpu.map((c, i) => ({ cpu: c, ram: metrics.ram[i] }))} />
+                                      {dep.status === 'RUNNING' && dep.telemetry_history?.length > 0 ? (
+                                        <TelemetryChart data={dep.telemetry_history} />
                                       ) : (
                                         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', gap: '0.5rem' }}>
                                           <Loader2 size={24} style={{ animation: 'spin 2s linear infinite', color: 'var(--vz-gold-core)' }} />
@@ -367,19 +369,7 @@ routes:
                                   </div>
                                 </div>
 
-                                <div style={{ marginTop: '1.5rem', background: '#000', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800 }}>
-                                    <TerminalSquare size={14} style={{ color: 'var(--vz-gold-core)' }} /> Live Output Stream
-                                  </div>
-                                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-pure)', maxHeight: '150px', overflowY: 'auto', lineHeight: 1.8 }}>
-                                    <div style={{ color: 'var(--text-muted)' }}>[{new Date().toISOString().split('T')[1].slice(0,8)}] Storm core initialized.</div>
-                                    <div style={{ color: 'var(--text-muted)' }}>[{new Date().toISOString().split('T')[1].slice(0,8)}] Node allocation: {dep.aws_instance_id || 'Pending'}</div>
-                                    {dep.status === 'PROVISIONING' && <div><span style={{color:'var(--vz-gold-core)'}}>⚡</span> Negotiating raw compute from AWS matrix...</div>}
-                                    {dep.status === 'COMPILING' && <div><span style={{color:'var(--vz-gold-core)'}}>⚡</span> Hardware acquired. Building container topology...</div>}
-                                    {dep.status === 'RUNNING' && <div><span style={{color:'#10b981'}}>▶</span> Gateway Nginx bound to {dep.elastic_ip}. OTLP sidecar active.</div>}
-                                    <div style={{ marginTop: '0.25rem', color: 'var(--vz-gold-core)', animation: 'pulse 1s infinite' }}>_</div>
-                                  </div>
-                                </div>
+
                               </div>
                             </td>
                           </motion.tr>

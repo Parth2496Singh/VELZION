@@ -37,6 +37,7 @@ class ProductionDeployment(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    ascended_at = models.DateTimeField(blank=True, null=True, help_text="Timestamp when infrastructure went live")
 
     def __str__(self):
         return f"Production: {self.github_repo_url} - {self.status}"

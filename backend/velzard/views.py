@@ -2,6 +2,7 @@ import os
 import uuid
 import requests
 import datetime
+from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -125,6 +126,9 @@ class ProductionDeploymentViewSet(viewsets.ModelViewSet):
         if new_status in ['DELETED', 'DESTROYED']:
             deployment.delete()
             return Response({"message": "Deployment record wiped from matrix."}, status=200)
+
+        if new_status == 'RUNNING' and deployment.status != 'RUNNING':
+            deployment.ascended_at = timezone.now()
 
         deployment.status = new_status or deployment.status
         deployment.aws_instance_id = request.data.get('aws_instance_id', deployment.aws_instance_id)
