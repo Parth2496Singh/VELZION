@@ -41,7 +41,7 @@ const CryptographicCore = () => (
   </div>
 );
 
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 
 // ----------------------------------------------------------------------
 // 🔐 MAIN LOGIN COMPONENT
