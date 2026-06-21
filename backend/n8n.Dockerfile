@@ -18,4 +18,8 @@ RUN chmod +x /usr/local/bin/terraform
 COPY --from=aws_cli_binary /usr/local/aws-cli/ /usr/local/aws-cli/
 RUN ln -s /usr/local/aws-cli/v2/current/bin/aws /usr/local/bin/aws
 
+# Bake the Terraform IaC code directly into the production image!
+# This removes the need for local volume mounts.
+COPY ./terraform /home/node/terraform
+
 USER node

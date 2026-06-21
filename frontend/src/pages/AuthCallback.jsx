@@ -90,7 +90,7 @@ export default function AuthCallback() {
           localStorage.setItem('velzion_repos', JSON.stringify(userRepos)); 
           
           // Redirect with cinematic delay
-          setTimeout(() => navigate('/dashboard'), 1500);
+          setTimeout(() => navigate('/zegion/dashboard'), 1500);
         })
         .catch(err => {
             // Step 3: Failure Protocol

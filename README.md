@@ -136,7 +136,97 @@ velzion-gitops/
 │   └── services.yaml                # Internal cluster networking
 └── values.yaml             # Environment-specific variable overrides
 ```
-## ☸️ Control Plane Infrastructure & CI/CD
+## 👶 Beginner's Guide: Step-by-Step Installation
+
+We've made deploying Velzion as simple as possible. Whether you're running it on your laptop or a cloud server, follow these exact steps.
+
+<details>
+<summary><h3>💻 Option 1: Local Setup (For Development on your Laptop)</h3></summary>
+
+**Step 1: Clone the Project**
+Open your terminal and download the code:
+```bash
+git clone https://github.com/Parth2496Singh/VELZION.git
+cd VELZION
+```
+
+**Step 2: Set up the Environment Variables**
+We need to give the app its passwords. We have provided a template for you:
+```bash
+cp .env.example .env
+```
+Open the `.env` file in your code editor. 
+- You don't need to change `DJANGO_SECRET_KEY` or `N8N_WEBHOOK_SECRET` for local use.
+- **Database:** Go to [Supabase](https://supabase.com/) or [Neon](https://neon.tech/), create a free Postgres database, and paste the credentials into the `DATABASE_URL` and `DB_POSTGRESDB_*` fields.
+- **GitHub:** Go to GitHub -> Settings -> Developer Settings -> OAuth Apps. Create one with Homepage `http://localhost:5173` and Callback `http://localhost:5173/auth/callback`. Paste the Client ID and Secret into your `.env`. Create a Personal Access Token and paste it into `GITHUB_PAT`.
+
+**Step 3: Run the Application!**
+Make sure Docker is installed and running on your computer, then run:
+```bash
+docker-compose up --build
+```
+*Wait a few minutes for everything to download and start.*
+
+**Step 4: Access Velzion**
+- 🌐 Frontend Dashboard: `http://localhost:5173`
+- ⚙️ Backend API: `http://localhost:8000`
+- 🤖 n8n Automations: `http://localhost:5678`
+
+</details>
+
+<details>
+<summary><h3>☁️ Option 2: EC2 Production Setup (For Live Cloud Servers)</h3></summary>
+
+**Step 1: Connect to your EC2 Server**
+SSH into your AWS EC2 instance (Ubuntu recommended):
+```bash
+ssh -i your-key.pem ubuntu@your-ec2-ip
+```
+
+**Step 2: Install Docker and Git**
+If it's a brand new server, install the required tools:
+```bash
+sudo apt update
+sudo apt install -y git docker.io docker-compose
+sudo usermod -aG docker ubuntu
+# Log out and log back in for docker groups to apply
+```
+
+**Step 3: Clone the Project**
+Download the code to your server:
+```bash
+git clone https://github.com/Parth2496Singh/VELZION.git
+cd VELZION
+```
+
+**Step 4: Set up the Production Environment Variables**
+```bash
+cp .env.example .env
+nano .env
+```
+Now fill in your `.env` file:
+- **Change** `DJANGO_SECRET_KEY` and `N8N_WEBHOOK_SECRET` to random, secure passwords!
+- **Database:** Paste your external Supabase/Neon PostgreSQL credentials.
+- **GitHub:** Create a GitHub OAuth App with your EC2's Public IP (e.g., `http://54.12.34.56` and `http://54.12.34.56/auth/callback`) and paste the IDs. Paste your `GITHUB_PAT`.
+- **AWS Credentials:** Fill in `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` so Velzion can provision infrastructure.
+- **Frontend URLs:** Change `VITE_API_BASE_URL` and `VITE_N8N_WEBHOOK_URL` to your EC2's public IP (e.g., `http://54.12.34.56:8000`).
+- Press `CTRL+X`, then `Y`, then `Enter` to save and exit nano.
+
+**Step 5: Run the Production Build!**
+We use a special command for EC2 that builds an optimized, lightning-fast Nginx version of the app:
+```bash
+docker-compose -f docker-compose.prod.yml up -d --build
+```
+*(The `-d` flag runs it in the background so it stays alive when you close your SSH terminal).*
+
+**Step 6: Access Velzion**
+Open your web browser and go to your EC2's Public IP address! (e.g., `http://54.12.34.56`)
+
+</details>
+
+---
+
+## ☸️ Control Plane Infrastructure & CI/CD (EKS GitOps)
 The core Velzion Control Plane operates as a cloud-native application deployed to Amazon EKS. Local development utilizes Docker Compose to orchestrate the monolith seamlessly.
 
 **Continuous Integration**: Jenkins (Jenkinsfile) drives the DevSecOps pipeline, running SonarQube for static analysis and Trivy for container vulnerability scanning.
@@ -146,6 +236,50 @@ The core Velzion Control Plane operates as a cloud-native application deployed t
 **State Management**: Terraform execution states are securely bound to an AWS S3 remote backend to protect against pod restarts.
 
 **Observability**: System logs and container metrics are piped to AWS CloudWatch.
+
+---
+
+## 🐳 Docker Image Build & Push Guide (SemVer Versioning)
+
+If you are deploying Velzion to a Kubernetes cluster or a remote EC2 machine, you will want to build and push your Docker images to a container registry (like Docker Hub or AWS ECR) using Semantic Versioning (SemVer).
+
+### 1. Tagging Strategy
+Always tag your images with a specific semantic version (e.g., `v1.2.0`) rather than relying purely on `latest`. This ensures repeatable, rollback-safe deployments.
+
+### 2. Building & Pushing the Backend & n8n
+These are standard builds that inject the code into the image:
+
+```bash
+# Build and tag the images
+docker build -t your-registry/velzion-backend:v1.2.0 ./backend
+docker build -t your-registry/velzion-n8n:v1.2.0 -f ./backend/n8n.Dockerfile ./backend
+
+# Push the images to your registry
+docker push your-registry/velzion-backend:v1.2.0
+docker push your-registry/velzion-n8n:v1.2.0
+```
+
+### 3. Building & Pushing the Frontend (Important: Build Args)
+Unlike the backend, the React frontend is compiled into static files *during* the Docker build process. It needs to know the production URLs at compile time. You **must** pass these via `--build-arg`:
+
+```bash
+# Define your production EC2/Domain IPs
+export PROD_API_URL="http://your-production-domain.com/api"
+export PROD_WEBHOOK_URL="http://your-production-domain.com/webhook"
+
+# Build the frontend with arguments injected
+docker build \
+  --build-arg VITE_API_BASE_URL=$PROD_API_URL \
+  --build-arg VITE_N8N_WEBHOOK_URL=$PROD_WEBHOOK_URL \
+  -t your-registry/velzion-frontend:v1.2.0 \
+  ./frontend
+
+# Push the frontend image
+docker push your-registry/velzion-frontend:v1.2.0
+```
+
+### 4. Updating your `docker-compose.prod.yml`
+Once pushed, you can update your EC2 machine to simply pull the images instead of building from source! Replace `build:` with `image: your-registry/velzion-frontend:v1.2.0` in your production compose file.
 
 ## 📄 License
 This project is licensed under the MIT License - see the LICENSE file for details.

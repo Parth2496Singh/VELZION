@@ -11,6 +11,7 @@ Thumbs.db
 # --- GLOBAL SECRETS (CATCH-ALL) ---
 .env
 .env.*
+!.env.example
 *.pem
 *.key
 *.pub

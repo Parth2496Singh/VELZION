@@ -1,26 +1,7 @@
-
+version: '3.8'
 
 services:
-  # 1. The Database
-  db:
-    image: postgres:15
-    container_name: velzion-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: velzion
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d velzion"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  # 2. The n8n Orchestrator
+  # 1. The n8n Orchestrator (Stateless, connected to external DB)
   n8n:
     build:
       context: ./backend
@@ -30,25 +11,12 @@ services:
     ports:
       - "5678:5678"
     env_file:
-      - ./backend/.env
-    environment:
-      - N8N_HOST=localhost
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - NODE_ENV=production
-      - WEBHOOK_URL=http://localhost:5678/
-      - N8N_ENABLE_EXECUTE_COMMAND=true
-      - NODES_EXCLUDE=[]
-      - N8N_WEBHOOK_SECRET=L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA
-      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
-      - AWS_PROFILE=default
-      - AWS_DEFAULT_REGION=us-east-1
+      - .env
     volumes:
-      - n8n_data:/home/node/.n8n
+      # Mount terraform for local rapid development (no need to rebuild)
       - ./backend/terraform:/home/node/terraform
-      - ~/.aws:/home/node/.aws:ro
 
-  # 3. The Django Control Plane
+  # 2. The Django Control Plane (Stateless, connected to external DB)
   backend:
     build:
       context: ./backend
@@ -57,26 +25,16 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
-    depends_on:
-      - db
     env_file:
-      - ./backend/.env
-    environment:
-      - DB_HOST=db
-      - DB_USER=postgres
-      - DB_PASSWORD=password
-      - DB_NAME=velzion
-      - DATABASE_URL=postgres://postgres:password@db:5432/velzion
+      - .env
     volumes:
       - ./backend:/app
     command: python manage.py runserver 0.0.0.0:8000
-  # 4. The React SPA (Served via Nginx)
-  # 4. The React SPA (Vite Development Server)
-  frontend:
 
+  # 3. The React SPA (Vite Development Server)
+  frontend:
     image: node:20-alpine
     working_dir: /app
-    
     container_name: velzion-react
     restart: unless-stopped
     depends_on:
@@ -85,9 +43,9 @@ services:
       - "5173:5173"
     stdin_open: true  
     tty: true 
+    env_file:
+      - .env
     environment:
-      - VITE_API_BASE_URL=http://localhost:8000
-      - VITE_N8N_WEBHOOK_URL=http://localhost:5678/webhook
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
     volumes:
@@ -95,8 +53,5 @@ services:
       - /app/node_modules      
     command: sh -c "npm install && npm run dev"  
 
-volumes:
-  pgdata:
-  n8n_data:
-    external: true
-    name: backend_n8n_data
+# 🛑 NO VOLUMES DEFINED! 
+# We rely entirely on the external database for state persistence.

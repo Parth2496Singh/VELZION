@@ -19,7 +19,7 @@
     },
     {
       "parameters": {
-        "url": "=http://54.86.145.100/api/integrations/lookup/?repo_url={{ encodeURIComponent($json.body.repository.clone_url) }}",
+        "url": "={{ $env[\"BACKEND_INTERNAL_URL\"] }}/api/integrations/lookup/?repo_url={{ encodeURIComponent($json.body.repository.clone_url) }}",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -95,7 +95,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer <your-github-PAT>"
+              "value": "=Bearer {{ $env[\"GITHUB_PAT\"] }}"
             },
             {
               "name": "Accept",
@@ -121,13 +121,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://54.86.145.100/api/webhooks/github/",
+        "url": "={{ $env[\"BACKEND_INTERNAL_URL\"] }}/api/webhooks/github/",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "x-velzion-secret",
-              "value": "L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA"
+              "value": "={{ $env[\"N8N_WEBHOOK_SECRET\"] }}"
             }
           ]
         },
@@ -167,7 +167,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer <your-github-PAT>"
+              "value": "=Bearer {{ $env[\"GITHUB_PAT\"] }}"
             },
             {
               "name": "Accept",
@@ -193,13 +193,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://54.86.145.100/api/webhooks/github/",
+        "url": "={{ $env[\"BACKEND_INTERNAL_URL\"] }}/api/webhooks/github/",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "x-velzion-secret",
-              "value": "L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA"
+              "value": "={{ $env[\"N8N_WEBHOOK_SECRET\"] }}"
             }
           ]
         },
@@ -380,7 +380,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer <your-github-PAT>"
+              "value": "=Bearer {{ $env[\"GITHUB_PAT\"] }}"
             },
             {
               "name": "Accept",
@@ -406,13 +406,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://54.86.145.100/api/webhooks/github/",
+        "url": "={{ $env[\"BACKEND_INTERNAL_URL\"] }}/api/webhooks/github/",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "x-velzion-secret",
-              "value": "L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA"
+              "value": "={{ $env[\"N8N_WEBHOOK_SECRET\"] }}"
             }
           ]
         },
@@ -497,7 +497,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer <your-github-PAT>"
+              "value": "=Bearer {{ $env[\"GITHUB_PAT\"] }}"
             },
             {
               "name": "Accept",
@@ -523,13 +523,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://54.86.145.100/api/webhooks/github/",
+        "url": "={{ $env[\"BACKEND_INTERNAL_URL\"] }}/api/webhooks/github/",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "x-velzion-secret",
-              "value": "L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA"
+              "value": "={{ $env[\"N8N_WEBHOOK_SECRET\"] }}"
             }
           ]
         },
@@ -617,7 +617,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer <your-github-PAT>"
+              "value": "=Bearer {{ $env[\"GITHUB_PAT\"] }}"
             },
             {
               "name": "Accept",
@@ -711,7 +711,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer <your-github-PAT>"
+              "value": "=Bearer {{ $env[\"GITHUB_PAT\"] }}"
             },
             {
               "name": "Accept",
@@ -737,13 +737,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://54.86.145.100/api/webhooks/github/",
+        "url": "={{ $env[\"BACKEND_INTERNAL_URL\"] }}/api/webhooks/github/",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "x-velzion-secret",
-              "value": "L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA"
+              "value": "={{ $env[\"N8N_WEBHOOK_SECRET\"] }}"
             }
           ]
         },
