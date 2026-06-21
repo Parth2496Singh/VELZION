@@ -9,6 +9,8 @@ import {
 import { useTelemetry } from '../../context/TelemetryContext';
 
 axios.defaults.withCredentials = true;
+axios.defaults.xsrfCookieName = 'csrftoken';
+axios.defaults.xsrfHeaderName = 'X-CSRFToken';
 
 // ----------------------------------------------------------------------
 // ⚡ PHYSICS SPECS

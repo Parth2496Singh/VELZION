@@ -62,20 +62,24 @@ export default function IamLogin() {
         animate={{ opacity: 1, y: 0 }}
         style={{ width: '100%', maxWidth: '850px', marginBottom: '2rem' }}
       >
-        <Link to="/" style={{ 
+        <button onClick={() => navigate(-1)} style={{ 
           display: 'inline-flex', 
           alignItems: 'center', 
           gap: '0.5rem', 
           color: 'var(--text-muted)',
           fontSize: '0.9rem',
           fontWeight: 500,
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          padding: 0,
           transition: 'color var(--transition-fast)'
         }}
         onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-pure)'}
         onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
         >
           <ArrowLeft size={16} /> Return to Velzion
-        </Link>
+        </button>
       </motion.div>
 
       <motion.div 
