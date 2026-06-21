@@ -80,7 +80,7 @@ class EphemeralEnvironmentViewSet(viewsets.ModelViewSet):
         environment.terminated_at = timezone.now()
         environment.save()
         
-        n8n_base = os.environ.get('N8N_INTERNAL_URL', 'http://velzion-n8n:5678')
+        n8n_base = os.environ.get('N8N_INTERNAL_URL', 'http://n8n:5678')
         try:
             requests.post(f"{n8n_base}/webhook/zegion-pr", json={
                 "action": "closed",
@@ -164,7 +164,7 @@ def github_webhook(request):
         defaults=update_data
     )
     if action_status == 'BUILT':
-        n8n_base = os.environ.get('N8N_INTERNAL_URL', 'http://velzion-n8n:5678')
+        n8n_base = os.environ.get('N8N_INTERNAL_URL', 'http://n8n:5678')
         try:
             requests.post(f"{n8n_base}/webhook/zegion-auto-sleep", json={
                 "repo_url": repo_url,
@@ -235,7 +235,7 @@ class GitHubCommentWebhookView(APIView):
             env.save()
             
             # Fire to n8n Wake webhook endpoint
-            n8n_base = os.environ.get('N8N_INTERNAL_URL', 'http://velzion-n8n:5678')
+            n8n_base = os.environ.get('N8N_INTERNAL_URL', 'http://n8n:5678')
             requests.post(f"{n8n_base}/webhook/zegion-chatops-wake", json={
                 "repo_url": repo_url,
                 "pr_number": pr_number,
@@ -249,7 +249,7 @@ class GitHubCommentWebhookView(APIView):
                 return Response({"message": "Command blocked: Already sleeping"}, status=status.HTTP_200_OK)
             
             # Fire to n8n Sleep webhook endpoint
-            n8n_base = os.environ.get('N8N_INTERNAL_URL', 'http://velzion-n8n:5678')
+            n8n_base = os.environ.get('N8N_INTERNAL_URL', 'http://n8n:5678')
             requests.post(f"{n8n_base}/webhook/zegion-chatops-sleep", json={
                 "repo_url": repo_url,
                 "pr_number": pr_number,

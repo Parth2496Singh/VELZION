@@ -65,7 +65,7 @@ class ProductionDeploymentViewSet(viewsets.ModelViewSet):
         deployment.status = 'PROVISIONING'
         deployment.save()
 
-        n8n_url = os.environ.get('N8N_VELZARD_WEBHOOK', 'http://velzion-n8n:5678/webhook/velzard-deploy')
+        n8n_url = os.environ.get('N8N_VELZARD_WEBHOOK', 'http://n8n:5678/webhook/velzard-deploy')
         payload = {
             "action": "deploy",
             "deployment_id": str(deployment.id),
@@ -92,7 +92,7 @@ class ProductionDeploymentViewSet(viewsets.ModelViewSet):
         deployment.status = 'DESTROYING'
         deployment.save()
 
-        n8n_url = os.environ.get('N8N_VELZARD_WEBHOOK', 'http://velzion-n8n:5678/webhook/velzard-deploy')
+        n8n_url = os.environ.get('N8N_VELZARD_WEBHOOK', 'http://n8n:5678/webhook/velzard-deploy')
         payload = {
             "action": "destroy",
             "deployment_id": str(deployment.id),
