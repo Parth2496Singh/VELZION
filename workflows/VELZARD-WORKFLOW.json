@@ -104,7 +104,7 @@
           "parameters": [
             {
               "name": "x-velzion-secret",
-              "value": "L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA"
+              "value": "={{ $env[\"N8N_WEBHOOK_SECRET\"] }}"
             }
           ]
         },
