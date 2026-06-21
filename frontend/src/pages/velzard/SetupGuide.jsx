@@ -46,6 +46,13 @@ const steps = [
     icon: Zap,
     description: 'Trigger your first production deployment. The engine will compile your containers, boot the AWS instances, and begin streaming live OTLP telemetry back to your dashboard.',
     code: null
+  },
+  {
+    id: 'n8n_workflow',
+    title: 'Deploy n8n Automation Engine',
+    icon: Activity,
+    description: 'Since n8n version 2.0+, the executeCommand node is disabled by default for security. Ensure your .env has NODES_EXCLUDE=[] and then import your Velzard/Zegion workflow.json into your n8n workspace to handle the core orchestration.',
+    code: null
   }
 ];
 
