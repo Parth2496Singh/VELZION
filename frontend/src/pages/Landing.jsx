@@ -79,22 +79,7 @@ export default function Landing() {
       {/* Hero Section */}
       <motion.main variants={containerVariants} initial="hidden" animate="show" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', maxWidth: '1200px', margin: '0 auto', zIndex: 10, padding: '6rem 2rem', position: 'relative' }}>
         
-        {/* Floating Telemetry Element */}
-        <motion.div animate={floatAnimation} style={{ position: 'absolute', top: '15%', left: '5%', padding: '1rem', background: 'var(--bg-layer-2)', border: '1px solid var(--zg-purple-border)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)' }}>
-          <Activity size={20} className="text-gradient-zegion" />
-          <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Preview Latency</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-pure)' }}>2.4s</div>
-          </div>
-        </motion.div>
 
-        <motion.div animate={{ ...floatAnimation.animate, y: [0, 15, 0] }} transition={floatAnimation.transition} style={{ position: 'absolute', top: '35%', right: '0%', padding: '1rem', background: 'var(--bg-layer-2)', border: '1px solid var(--vz-gold-border)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)' }}>
-          <CloudCog size={20} className="text-gradient-velzard" />
-          <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Production Nodes</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-pure)' }}>14 Active</div>
-          </div>
-        </motion.div>
 
         <motion.div variants={itemVariants} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1.25rem', borderRadius: 'var(--radius-pill)', border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'var(--bg-layer-2)', marginBottom: '2.5rem', backdropFilter: 'blur(10px)' }}>
           <span style={{ display: 'flex', height: '8px', width: '8px', borderRadius: '50%', backgroundColor: '#10b981', boxShadow: '0 0 12px #10b981' }} />
@@ -146,6 +131,57 @@ export default function Landing() {
               <CheckCircle2 size={28} strokeWidth={1.5} style={{ color: '#10b981', marginBottom: '1.5rem' }} />
               <h4 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.75rem', color: 'var(--text-pure)' }}>Live OTLP Telemetry</h4>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>Stream live CPU, Memory, and Network latency matrices directly from your edge nodes directly into the React control plane via WebSocket.</p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Vs Competitors Section */}
+        <motion.div variants={itemVariants} style={{ width: '100%', textAlign: 'left', position: 'relative', zIndex: 1, marginTop: '6rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '3rem' }}>
+            <div style={{ height: '1px', flex: 1, background: 'linear-gradient(90deg, transparent, var(--border-subtle))' }} />
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-pure)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Why Velzion?</h2>
+            <div style={{ height: '1px', flex: 1, background: 'linear-gradient(-90deg, transparent, var(--border-subtle))' }} />
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+            <div className="glass-panel" style={{ padding: '2.5rem', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ef4444', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)' }}>✗</span> The Competitors
+              </h3>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <li style={{ color: 'var(--text-muted)', fontSize: '0.95rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem', lineHeight: 1.5 }}>
+                  <span style={{ color: '#ef4444', fontWeight: 800, marginTop: '2px' }}>•</span>
+                  <strong>The PaaS Markup Trap:</strong> Hosted platforms charge massive 300%+ premium markups over raw AWS compute costs, draining early-stage startup capital.
+                </li>
+                <li style={{ color: 'var(--text-muted)', fontSize: '0.95rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem', lineHeight: 1.5 }}>
+                  <span style={{ color: '#ef4444', fontWeight: 800, marginTop: '2px' }}>•</span>
+                  <strong>Persistent Staging Waste:</strong> Shared staging servers run 24/7, creating massive developer friction (merge conflicts, overwritten branches) and thousands of dollars wasted on idle compute.
+                </li>
+                <li style={{ color: 'var(--text-muted)', fontSize: '0.95rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem', lineHeight: 1.5 }}>
+                  <span style={{ color: '#ef4444', fontWeight: 800, marginTop: '2px' }}>•</span>
+                  <strong>Data Privacy Risks:</strong> Your code, environment variables, and databases reside on third-party multi-tenant servers.
+                </li>
+              </ul>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '2.5rem', background: 'var(--vz-gold-glow)', border: '1px solid var(--vz-gold-border)' }}>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--vz-gold-core)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(245, 203, 92, 0.1)' }}>✓</span> The Velzion Advantage
+              </h3>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <li style={{ color: 'var(--text-pure)', fontSize: '0.95rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem', lineHeight: 1.5 }}>
+                  <span style={{ color: 'var(--vz-gold-core)', fontWeight: 800, marginTop: '2px' }}>•</span>
+                  <strong>Zero Platform Markup:</strong> You pay raw AWS pricing. Save up to 60% automatically via Zegion's intelligent Spot Instance mapping and Scale-to-Zero lifecycle.
+                </li>
+                <li style={{ color: 'var(--text-pure)', fontSize: '0.95rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem', lineHeight: 1.5 }}>
+                  <span style={{ color: 'var(--vz-gold-core)', fontWeight: 800, marginTop: '2px' }}>•</span>
+                  <strong>Ephemeral Previews:</strong> A unique environment boots for every PR, and is ruthlessly destroyed the second the PR is closed or goes idle. No more merge queues.
+                </li>
+                <li style={{ color: 'var(--text-pure)', fontSize: '0.95rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem', lineHeight: 1.5 }}>
+                  <span style={{ color: 'var(--vz-gold-core)', fontWeight: 800, marginTop: '2px' }}>•</span>
+                  <strong>Absolute Data Residency:</strong> Velzion is a BYOC orchestrator. All infrastructure is deployed inside <i>your</i> AWS VPC. Your data never leaves your control.
+                </li>
+              </ul>
             </div>
           </div>
         </motion.div>

@@ -160,6 +160,34 @@ export default function Login() {
             )}
           </button>
 
+          <Link to="/Iam-login-page" style={{ 
+            marginTop: '1rem', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            width: '100%', 
+            padding: '1.1rem', 
+            background: 'transparent', 
+            color: 'var(--text-pure)', 
+            border: '1px solid rgba(255,255,255,0.1)', 
+            borderRadius: 'var(--radius-md)', 
+            textDecoration: 'none', 
+            fontWeight: 700, 
+            fontSize: '1rem',
+            transition: 'all var(--transition-smooth)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+          }}
+          >
+            Enterprise IAM Login
+          </Link>
+
           <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>
             <ShieldCheck size={14} style={{ color: 'var(--zg-purple-core)' }} /> Enterprise-grade keyless infrastructure
           </div>

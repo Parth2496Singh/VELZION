@@ -33,6 +33,14 @@ const ActionButton = ({ icon: Icon }) => (
 export default function TopNavbar() {
   const location = useLocation();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [user, setUser] = useState(null);
+
+  React.useEffect(() => {
+    const u = localStorage.getItem('velzion_user');
+    if (u) {
+      try { setUser(JSON.parse(u)); } catch(e) {}
+    }
+  }, []);
   
   // Parse URL for dynamic breadcrumbs
   const pathParts = location.pathname.split('/').filter(Boolean);
@@ -132,7 +140,23 @@ export default function TopNavbar() {
             margin: '0 0.5rem'
           }} />
           
-          <ActionButton icon={User} />
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', paddingLeft: '0.5rem' }}>
+              {user.avatar ? (
+                <img src={user.avatar} alt="Avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--border-subtle)' }} />
+              ) : (
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--bg-glass)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <User size={16} />
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-pure)' }}>{user.username || 'User'}</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>GitHub Identity</span>
+              </div>
+            </div>
+          ) : (
+            <ActionButton icon={User} />
+          )}
         </div>
       </div>
 

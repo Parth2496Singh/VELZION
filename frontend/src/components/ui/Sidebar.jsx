@@ -194,13 +194,46 @@ export default function Sidebar() {
         paddingTop: '1.5rem', 
         borderTop: 'var(--border-subtle)' 
       }}>
+        <a href={`http://${window.location.hostname}:5678`} target="_blank" rel="noopener noreferrer" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          padding: '0.75rem 1rem',
+          color: 'var(--text-muted)',
+          transition: 'color var(--transition-fast)',
+          textDecoration: 'none'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.color = '#ff6b6b'}
+        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+        >
+          <Zap size={18} />
+          <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>n8n Orchestrator</span>
+        </a>
+
+        <Link to="/" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          padding: '0.75rem 1rem',
+          color: 'var(--text-muted)',
+          transition: 'color var(--transition-fast)',
+          textDecoration: 'none'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-pure)'}
+        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+        >
+          <Hexagon size={18} />
+          <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>Velzion Home</span>
+        </Link>
+        
         <Link to="/docs" style={{
           display: 'flex',
           alignItems: 'center',
           gap: '0.75rem',
           padding: '0.75rem 1rem',
           color: 'var(--text-muted)',
-          transition: 'color var(--transition-fast)'
+          transition: 'color var(--transition-fast)',
+          textDecoration: 'none'
         }}
         onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-pure)'}
         onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}

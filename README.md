@@ -246,9 +246,10 @@ nano .env
 Now fill in your `.env` file:
 - **Change** `DJANGO_SECRET_KEY` and `N8N_WEBHOOK_SECRET` to random, secure passwords!
 - **Database (CRITICAL IPv6 FIX):** Paste your Supabase/Neon credentials. **IF USING SUPABASE**, you MUST use the **IPv4 Connection Pooler URL (Port 6543)**. Standard AWS EC2 instances cannot route IPv6, and the direct port 5432 will throw a "Network is unreachable" error.
-- **GitHub:** Create a GitHub OAuth App with your EC2's Public IP (e.g., `http://54.12.34.56` and `http://54.12.34.56/auth/callback`) and paste the IDs. Paste your `GITHUB_PAT`.
+- **GitHub:** Create a GitHub OAuth App with your EC2's Public IP (e.g., `http://13.221.146.6` and `http://13.221.146.6/auth/callback`) and paste the IDs. Paste your `GITHUB_PAT`.
 - **AWS Credentials:** Fill in `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` so Velzion can provision infrastructure.
-- **Frontend URLs:** Change `VITE_API_BASE_URL` and `VITE_N8N_WEBHOOK_URL` to your EC2's public IP (e.g., `http://54.12.34.56:8000`).
+- **Frontend URLs:** Change `VITE_API_BASE_URL` to your backend API URL (e.g., `http://13.221.146.6:8000`). Change `VITE_N8N_WEBHOOK_URL` to your n8n URL (e.g., `http://13.221.146.6:5678`).
+- **Backend URL for GitHub Auth:** Ensure `FRONTEND_URL` is set to exactly your EC2 public IP without a trailing slash (e.g., `FRONTEND_URL=http://13.221.146.6`). This is CRITICAL for GitHub OAuth redirect matching.
 - Press `CTRL+X`, then `Y`, then `Enter` to save and exit nano.
 
 **Step 5: Run the Production Build!**
