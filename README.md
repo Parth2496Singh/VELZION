@@ -4,19 +4,30 @@
 # 🚀 Project Velzion
 **The Open-Source BYOC Control Plane for Automated Deployments & Ephemeral Environments**
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
-[![Control Plane](https://img.shields.io/badge/Control_Plane-Django_%7C_React-blue.svg)](#)
-[![Orchestration Engine](https://img.shields.io/badge/Orchestrator-n8n-FF6600.svg)](#)
-[![Cloud Infrastructure](https://img.shields.io/badge/Cloud-AWS_%7C_BYOC-FF9900.svg)](#)
-[![GitOps](https://img.shields.io/badge/GitOps-ArgoCD_%7C_Helm-purple.svg)](#)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#)
+<div align="center" style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+  <img src="https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white" />
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/n8n-FF6600?style=for-the-badge&logo=n8n&logoColor=white" />
+  <img src="https://img.shields.io/badge/Terraform-7B42BC?style=for-the-badge&logo=terraform&logoColor=white" />
+  <img src="https://img.shields.io/badge/Amazon_AWS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" />
+  <img src="https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/ArgoCD-EF7B4D?style=for-the-badge&logo=argo&logoColor=white" />
+</div>
 
 </div>
 Modern cloud development is caught in a paradox: developers crave the flawless, zero-configuration deployment experiences of modern PaaS providers, while startups face brutal pricing markups, lack of deep database isolation, and severe data privacy risks on shared platforms. 
 
 **Velzion resolves this tension.** As an enterprise-grade, open-source Bring Your Own Cloud (BYOC) DevOps Control Plane, Velzion acts strictly as an orchestration brain—it owns zero compute. It turns a company’s private AWS infrastructure into a self-hosted, automated app platform, guaranteeing 100% data residency and zero vendor premium markups.
 
-</div>
+---
+
+## ✨ Key Features
+* 🎛️ **Granular Hardware Control:** Select your exact AWS EC2 Instance Type (e.g., `t3.small`, `c5.large`) and dynamically scale your EBS Storage (10GB - 200GB) directly from the UI before deploying.
+* ⚡ **1-Click Ephemeral Environments:** Automatically spin up cheap AWS Spot instances the moment a Pull Request is opened, and auto-destroy them when closed (Zero Idle Cost).
+* 📊 **Live OTLP Telemetry:** Stream live CPU and RAM hardware utilization matrices directly from your AWS instances to the React dashboard in real-time.
+* ☁️ **Absolute Data Residency:** Since Velzion provisions inside *your* AWS account via temporary STS roles, your databases and application code never touch our servers.
+* 🏗️ **Dual-Engine Architecture:** Use **Zegion** for rapid, ephemeral PR previews, and **Velzard** for rock-solid, highly-available production clusters.
 
 ---
 
@@ -74,6 +85,26 @@ For deployment access, the React frontend redirects users to launch a pre-config
 
 
 ## 🏛️ System Architecture
+
+```mermaid
+graph TD
+    User([Developer / GitHub PR]) -->|Webhook Event| Django[Django Control Plane]
+    
+    subgraph Control_Plane [Velzion BYOC Matrix]
+        Django -->|Trigger Deploy/Destroy| n8n[n8n Workflow Automation]
+        Django ---|State/Telemetry| DB[(PostgreSQL Database)]
+        
+        n8n -->|Generate IaC| TF[Terraform Engine]
+        TF -.->|Assumes IAM Role| AWS[AWS Cloud]
+    end
+
+    subgraph AWS_Cloud [User AWS Account]
+        AWS -->|Provisions VPC & Instances| EC2[EC2 Dedicated/Spot Node]
+        EC2 -->|OTLP Telemetry| Django
+        EC2 -->|Wildcard Proxy| Nginx[Nginx Reverse Proxy]
+        Nginx -->|Routes Traffic| AppContainer[Deployed Docker App]
+    end
+```
 
 ### Backend Structure & Modular Boundaries
 Velzion enforces strict domain boundaries using a **Modular Monolith** architecture built on Django, exposing strict RESTful endpoints.

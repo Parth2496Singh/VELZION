@@ -72,6 +72,8 @@ export default function Production() {
   const [step, setStep] = useState(1);
   const [verificationStatus, setVerificationStatus] = useState('idle');
   const [launchStatus, setLaunchStatus] = useState('idle');
+  const [instanceType, setInstanceType] = useState('t3.small');
+  const [volumeSize, setVolumeSize] = useState(30);
 
   // --- TELEMETRY & CINEMATIC STATE ---
   const [expandedRowId, setExpandedRowId] = useState(null);
@@ -159,7 +161,9 @@ routes:
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/velzard/deployments/`, {
         github_repo_url: `https://github.com/${selectedRepo}`,
-        branch: 'main'
+        branch: 'main',
+        instance_type: instanceType,
+        volume_size: parseInt(volumeSize, 10)
       });
       setCurrentDeploymentId(res.data.id);
       setStep(2);
@@ -356,8 +360,8 @@ routes:
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                     <div className="glass-panel" style={{ padding: '1.25rem' }}>
                                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}><Cpu size={14} style={{ color: 'var(--vz-gold-core)' }} /> Compute Core</div>
-                                      <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-pure)', fontFamily: 'monospace' }}>AWS t3.small</div>
-                                      <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem' }}>2 vCPU • 2 GiB Memory</div>
+                                      <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-pure)', fontFamily: 'monospace' }}>AWS {dep.instance_type || 't3.small'}</div>
+                                      <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem' }}>{dep.volume_size || 30} GB EBS Storage</div>
                                     </div>
                                     <div className="glass-panel" style={{ padding: '1.25rem' }}>
                                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}><Clock size={14} style={{ color: '#a78bfa' }} /> Storm Duration</div>
@@ -502,6 +506,54 @@ routes:
                         )}
                       </div>
                     )}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                    <div>
+                      <label style={{ display: 'block', color: 'var(--vz-gold-core)', fontSize: '0.75rem', fontWeight: 800, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Hardware Tier</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {['t3.small', 't3.medium', 'c5.large'].map(type => (
+                          <div 
+                            key={type}
+                            onClick={() => setInstanceType(type)}
+                            style={{ 
+                              padding: '1rem', 
+                              border: `1px solid ${instanceType === type ? 'var(--vz-gold-core)' : 'var(--border-subtle)'}`, 
+                              background: instanceType === type ? 'var(--vz-gold-glow)' : 'var(--bg-void)',
+                              borderRadius: 'var(--radius-sm)', 
+                              cursor: 'pointer', 
+                              transition: 'all 0.2s',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <span style={{ color: 'var(--text-pure)', fontWeight: 700, fontFamily: 'monospace' }}>{type}</span>
+                            {instanceType === type && <CheckCircle2 size={16} color="var(--vz-gold-core)" />}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label style={{ display: 'block', color: 'var(--vz-gold-core)', fontSize: '0.75rem', fontWeight: 800, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>EBS Storage (GB)</label>
+                      <div style={{ padding: '1.5rem', background: 'var(--bg-void)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
+                        <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-pure)', fontFamily: 'monospace' }}>{volumeSize} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>GB</span></div>
+                        <input 
+                          type="range" 
+                          min="10" 
+                          max="200" 
+                          step="10"
+                          value={volumeSize} 
+                          onChange={(e) => setVolumeSize(e.target.value)}
+                          style={{ width: '100%', accentColor: 'var(--vz-gold-core)', cursor: 'pointer' }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                          <span>10 GB</span>
+                          <span>200 GB</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <button 

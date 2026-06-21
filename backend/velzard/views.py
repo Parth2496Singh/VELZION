@@ -71,6 +71,8 @@ class ProductionDeploymentViewSet(viewsets.ModelViewSet):
             "deployment_id": str(deployment.id),
             "repo_full_name": deployment.github_repo_url,
             "branch": deployment.branch,
+            "instance_type": deployment.instance_type,
+            "volume_size": deployment.volume_size,
         }
         
         try:
@@ -95,7 +97,9 @@ class ProductionDeploymentViewSet(viewsets.ModelViewSet):
             "action": "destroy",
             "deployment_id": str(deployment.id),
             "repo_full_name": deployment.github_repo_url, 
-            "branch": deployment.branch
+            "branch": deployment.branch,
+            "instance_type": deployment.instance_type,
+            "volume_size": deployment.volume_size,
         }
         
         try:

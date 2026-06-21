@@ -20,6 +20,10 @@ class ProductionDeployment(models.Model):
     github_repo_url = models.CharField(max_length=255)
     branch = models.CharField(max_length=50, default='main')
     
+    # Infrastructure Sizing
+    instance_type = models.CharField(max_length=50, default='t3.small')
+    volume_size = models.IntegerField(default=30)
+    
     # Infrastructure State
     aws_instance_id = models.CharField(max_length=100, blank=True, null=True)
     elastic_ip = models.GenericIPAddressField(blank=True, null=True)

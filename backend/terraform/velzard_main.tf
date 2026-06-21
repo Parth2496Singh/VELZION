@@ -14,6 +14,18 @@ variable "deployment_id" {
   type        = string
 }
 
+variable "instance_type" {
+  description = "The EC2 instance type to provision"
+  type        = string
+  default     = "t3.small"
+}
+
+variable "volume_size" {
+  description = "The size of the EBS root volume in GB"
+  type        = number
+  default     = 30
+}
+
 provider "aws" {
   region = "us-east-1"
 }
@@ -50,11 +62,11 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_egress_prod" {
 
 resource "aws_instance" "velzard_prod_server" {
   ami                    = "ami-04b70fa74e45c3917" # Ubuntu 24.04 LTS
-  instance_type          = "t3.small"
+  instance_type          = var.instance_type
   vpc_security_group_ids = [aws_security_group.velzard_prod_sg.id]
 
   root_block_device {
-    volume_size           = 30 
+    volume_size           = var.volume_size
     volume_type           = "gp3"
     delete_on_termination = true
   }
