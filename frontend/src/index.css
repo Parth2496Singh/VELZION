@@ -1,39 +1,38 @@
 /* =========================================
-   VELZION CORE DESIGN SYSTEM
+   VELZION ELITE DESIGN SYSTEM (Obsidian Depth)
    ========================================= */
 
 :root {
   /* --- The Obsidian Canvas --- */
   --bg-void: #030303;
-  --bg-surface: rgba(15, 15, 15, 0.7);
-  --bg-glass: rgba(255, 255, 255, 0.02);
-  --bg-glass-hover: rgba(255, 255, 255, 0.05);
-
+  --bg-layer-1: rgba(255, 255, 255, 0.015);
+  --bg-layer-2: rgba(10, 10, 10, 0.7);
+  
   /* --- Zegion: Ephemeral Engine --- */
-  --zg-purple-core: #9D4EDD; /* Nebula Purple */
-  --zg-purple-glow: rgba(157, 78, 221, 0.25);
+  --zg-purple-core: #9D4EDD; 
+  --zg-purple-glow: rgba(147, 51, 234, 0.07);
   --zg-purple-border: rgba(157, 78, 221, 0.4);
 
   /* --- Velzard: Production Engine --- */
-  --vz-gold-core: #F5CB5C; /* Lightning Gold */
-  --vz-gold-glow: rgba(245, 203, 92, 0.25);
+  --vz-gold-core: #F5CB5C; 
+  --vz-gold-glow: rgba(234, 179, 8, 0.05);
   --vz-gold-border: rgba(245, 203, 92, 0.4);
 
   /* --- Typography --- */
   --text-pure: #FFFFFF;
   --text-muted: #8A8A93;
-  --text-dark: #121212;
+  --font-mono: 'JetBrains Mono', 'Geist Mono', monospace;
 
   /* --- Borders & Shadows --- */
-  --border-subtle: 1px solid rgba(255, 255, 255, 0.06);
+  --border-subtle: 1px solid rgba(255, 255, 255, 0.03);
   --border-focus: 1px solid rgba(255, 255, 255, 0.15);
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
   --radius-pill: 9999px;
   
-  --shadow-void: 0 8px 32px rgba(0, 0, 0, 0.8);
-  --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-void: 0 12px 48px rgba(0, 0, 0, 0.9);
+  --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.5);
   
   /* --- Transitions --- */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -43,38 +42,21 @@
 /* --- LIGHT THEME OVERRIDES --- */
 [data-theme="light"] {
   --bg-void: #f8f9fa;
-  --bg-surface: #ffffff;
-  --bg-glass: rgba(0, 0, 0, 0.03);
-  --bg-glass-hover: rgba(0, 0, 0, 0.06);
-
+  --bg-layer-1: rgba(0, 0, 0, 0.03);
+  --bg-layer-2: rgba(255, 255, 255, 0.8);
   --text-pure: #111827;
   --text-muted: #4b5563;
-  --text-dark: #ffffff;
-
   --border-subtle: 1px solid rgba(0, 0, 0, 0.1);
   --border-focus: 1px solid rgba(0, 0, 0, 0.2);
-
   --zg-purple-core: #7c3aed;
   --zg-purple-glow: rgba(124, 58, 237, 0.15);
-  --zg-purple-border: rgba(124, 58, 237, 0.3);
-
   --vz-gold-core: #d97706;
   --vz-gold-glow: rgba(217, 119, 6, 0.15);
-  --vz-gold-border: rgba(217, 119, 6, 0.3);
-
   --shadow-void: 0 8px 32px rgba(0, 0, 0, 0.1);
   --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.05);
 }
 
-/* =========================================
-   RESET & BASE STYLES
-   ========================================= */
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
   width: 100%;
@@ -87,27 +69,22 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  text-decoration: none;
-  color: inherit;
+::selection {
+  background: rgba(157, 78, 221, 0.2);
+  text-shadow: 0 0 8px var(--zg-purple-core);
 }
 
-button {
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-family: inherit;
-}
+a { text-decoration: none; color: inherit; }
+button { border: none; background: none; cursor: pointer; font-family: inherit; }
 
 /* =========================================
-   UTILITY CLASSES (No Tailwind Needed)
+   UTILITY CLASSES
    ========================================= */
 
-/* Glassmorphism Panels */
 .glass-panel {
-  background: var(--bg-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--bg-layer-1);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: var(--border-subtle);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-glass);
@@ -115,11 +92,10 @@ button {
 }
 
 .glass-panel:hover {
-  background: var(--bg-glass-hover);
+  background: rgba(255, 255, 255, 0.03);
   border: var(--border-focus);
 }
 
-/* Typography Gradients */
 .text-gradient-zegion {
   background: linear-gradient(135deg, #FFFFFF 0%, var(--zg-purple-core) 100%);
   -webkit-background-clip: text;
@@ -134,35 +110,21 @@ button {
   background-clip: text;
 }
 
-/* Layout Utilities */
-.flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-void); }
+::-webkit-scrollbar-thumb { background: var(--bg-layer-1); border-radius: var(--radius-pill); border: 1px solid var(--bg-void); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Status Anchors */
+@keyframes breathingStatus {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
 }
 
-.flex-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* Scrollbar Styling for Obsidian Canvas */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg-void);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--bg-surface);
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--bg-void);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+.status-pulse {
+  animation: breathingStatus 2.5s infinite ease-in-out;
 }

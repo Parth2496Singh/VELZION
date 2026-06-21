@@ -75,8 +75,15 @@ export default function AuthCallback() {
       // Step 1: Intercept Code
       setStatusMessage("Exchanging secure token with Velzion Backend...");
       
-      axios.post(`${API_URL}/callback/`, { code })
+      // Setup a hard timeout to prevent infinite hanging if Port 8000 is blocked by AWS Security Group
+      const source = axios.CancelToken.source();
+      const timeoutId = setTimeout(() => {
+        source.cancel("Backend unreachable. AWS Port 8000 is likely blocked.");
+      }, 8000);
+
+      axios.post(`${API_URL}/callback/`, { code }, { cancelToken: source.token })
         .then(response => {
+          clearTimeout(timeoutId);
           // Step 2: Success Protocol
           setAuthStep('success');
           setStatusMessage("Handshake verified. Fetching workspace topology...");
@@ -93,11 +100,15 @@ export default function AuthCallback() {
           setTimeout(() => navigate('/zegion/dashboard'), 1500);
         })
         .catch(err => {
-            // Step 3: Failure Protocol
+            clearTimeout(timeoutId);
             console.error("Auth Error:", err);
             setAuthStep('error');
-            setStatusMessage("Cryptographic binding failed. Invalid code or timeout.");
-            setTimeout(() => navigate('/login'), 3000);
+            if (axios.isCancel(err)) {
+              setStatusMessage("TIMEOUT: Backend unreachable! Ensure AWS Port 8000 is open in your Security Group.");
+            } else {
+              setStatusMessage("Cryptographic binding failed. Invalid code or backend error.");
+            }
+            setTimeout(() => navigate('/login'), 5000);
         });
     } else if (!code) {
       setAuthStep('error');

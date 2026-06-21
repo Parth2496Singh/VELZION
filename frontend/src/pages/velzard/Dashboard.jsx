@@ -6,8 +6,18 @@ import {
   Zap, Server, CheckCircle2, XCircle, ExternalLink, Loader2, 
   ChevronDown, TerminalSquare, Cpu, DollarSign, Clock, Activity, Box 
 } from 'lucide-react';
+import { useTelemetry } from '../../context/TelemetryContext';
 
 axios.defaults.withCredentials = true;
+
+// ----------------------------------------------------------------------
+// ⚡ PHYSICS SPECS
+// ----------------------------------------------------------------------
+const springCrisp = { type: "spring", stiffness: 450, damping: 32, mass: 0.8 };
+const springPage = { type: "spring", stiffness: 280, damping: 28 };
+const springModal = { type: "spring", stiffness: 400, damping: 24, velocity: 2 };
+const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05, delayChildren: 0.02 } } };
+const itemVariants = { hidden: { opacity: 0, y: 12, scale: 0.98 }, show: { opacity: 1, y: 0, scale: 1, transition: springPage } };
 
 // ----------------------------------------------------------------------
 // 📊 LIGHTWEIGHT CUSTOM SVG CHART (Replaces Recharts)
@@ -15,14 +25,12 @@ axios.defaults.withCredentials = true;
 const TelemetryChart = ({ data }) => {
   if (!data || data.length === 0) return null;
   
-  // Transform data into SVG polygon coordinates (0-100 scale)
   const mapToPath = (key) => {
     const points = data.map((d, i) => {
       const x = (i / (data.length - 1)) * 100;
       const y = 100 - (d[key] || 0);
       return `${x},${y}`;
     });
-    // Close the polygon at the bottom
     return `0,100 ${points.join(' ')} 100,100`;
   };
 
@@ -39,16 +47,13 @@ const TelemetryChart = ({ data }) => {
         </linearGradient>
       </defs>
       
-      {/* Grid Lines */}
       <line x1="0" y1="25" x2="100" y2="25" stroke="rgba(255,255,255,0.05)" strokeDasharray="2" strokeWidth="0.5" />
       <line x1="0" y1="50" x2="100" y2="50" stroke="rgba(255,255,255,0.05)" strokeDasharray="2" strokeWidth="0.5" />
       <line x1="0" y1="75" x2="100" y2="75" stroke="rgba(255,255,255,0.05)" strokeDasharray="2" strokeWidth="0.5" />
 
-      {/* RAM Area */}
       <polygon points={mapToPath('ram')} fill="url(#gradRam)" />
       <polyline points={mapToPath('ram').replace('0,100 ', '').replace(' 100,100', '')} fill="none" stroke="#a78bfa" strokeWidth="1.5" />
 
-      {/* CPU Area */}
       <polygon points={mapToPath('cpu')} fill="url(#gradCpu)" />
       <polyline points={mapToPath('cpu').replace('0,100 ', '').replace(' 100,100', '')} fill="none" stroke="var(--vz-gold-core)" strokeWidth="1.5" />
     </svg>
@@ -80,6 +85,8 @@ export default function Production() {
   const [isLightning, setIsLightning] = useState(false);
   const [timeTick, setTimeTick] = useState(0);
 
+  const { metrics } = useTelemetry();
+
   const yamlTemplate = `version: 1.0
 
 # ====================================================================
@@ -107,7 +114,6 @@ routes:
   /api: backend            
 `;
 
-  // --- 1. INITIALIZE & POLL STATE ---
   useEffect(() => {
     const storedUser = localStorage.getItem('velzion_user');
     const storedRepos = localStorage.getItem('velzion_repos'); 
@@ -120,7 +126,6 @@ routes:
     fetchDeployments();
   }, [navigate]);
 
-  // Automatic Background Polling Engine
   useEffect(() => {
     let interval;
     const activeStatuses = ['PROVISIONING', 'COMPILING', 'DESTROYING', 'RUNNING'];
@@ -130,7 +135,6 @@ routes:
     return () => clearInterval(interval);
   }, [deployments]);
 
-  // Cinematic Lightning Engine & Clock
   useEffect(() => {
     const clock = setInterval(() => setTimeTick(t => t + 1), 1000);
     const stormInterval = setInterval(() => {
@@ -139,23 +143,16 @@ routes:
         setTimeout(() => setIsLightning(false), 1200); 
       }, Math.random() * 10000);
     }, 20000); 
-
-    return () => {
-      clearInterval(clock);
-      clearInterval(stormInterval);
-    };
+    return () => { clearInterval(clock); clearInterval(stormInterval); };
   }, []);
 
   const fetchDeployments = async () => {
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/velzard/deployments/`);
       setDeployments(res.data);
-    } catch (err) {
-      console.error("Failed to fetch deployments", err);
-    }
+    } catch (err) { console.error("Failed to fetch deployments", err); }
   };
 
-  // --- 2. API ACTIONS ---
   const handleStartDeployment = async () => {
     if (!selectedRepo) return;
     try {
@@ -167,9 +164,7 @@ routes:
       });
       setCurrentDeploymentId(res.data.id);
       setStep(2);
-    } catch (err) {
-      console.error("Failed to initialize deployment", err);
-    }
+    } catch (err) { console.error("Failed to initialize deployment", err); }
   };
 
   const handleCommitToGitHub = () => {
@@ -184,9 +179,7 @@ routes:
     try {
       await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/velzard/deployments/${currentDeploymentId}/verify_contract/`);
       setVerificationStatus('success');
-    } catch (err) {
-      setVerificationStatus('error');
-    }
+    } catch (err) { setVerificationStatus('error'); }
   };
 
   const handleLaunchProduction = async () => {
@@ -196,9 +189,7 @@ routes:
       setLaunchStatus('success');
       setIsModalOpen(false);
       fetchDeployments();
-    } catch (err) {
-      setLaunchStatus('error');
-    }
+    } catch (err) { setLaunchStatus('error'); }
   };
 
   const handleDestroyCluster = async (id, e) => {
@@ -208,16 +199,13 @@ routes:
       await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/velzard/deployments/${id}/destroy_cluster/`);
       fetchDeployments(); 
       setExpandedRowId(null);
-    } catch (err) {
-      console.error("Failed to terminate cluster", err);
-    }
+    } catch (err) { console.error("Failed to terminate cluster", err); }
   };
 
   const toggleRowExpansion = (id) => {
     setExpandedRowId(expandedRowId === id ? null : id);
   };
 
-  // --- UTILITY ENGINE ---
   const calculateUptime = (createdAt) => {
     const diff = (new Date() - new Date(createdAt)) / 1000;
     if (diff < 0) return "00:00:00";
@@ -240,50 +228,32 @@ routes:
       transition={{ duration: 0.4 }}
       style={{ position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column' }}
     >
-      
-      {/* Ambient Lightning Flash */}
       <AnimatePresence>
         {isLightning && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.8, 0, 0.5, 0] }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.2 }}
-            style={{ position: 'absolute', inset: -50, background: 'var(--vz-gold-core)', zIndex: 0, pointerEvents: 'none' }}
-          />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: [0, 0.8, 0, 0.5, 0] }} exit={{ opacity: 0 }} transition={{ duration: 1.2 }} style={{ position: 'absolute', inset: -50, background: 'var(--vz-gold-core)', zIndex: 0, pointerEvents: 'none' }} />
         )}
       </AnimatePresence>
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-        {/* --- MAIN CONTENT HEADER --- */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '3rem' }}>
           <div>
             <span style={{ color: 'var(--vz-gold-core)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800 }}>High-Availability Operations</span>
-            <h1 style={{ margin: '0.5rem 0 0 0', fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-pure)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <Zap size={36} style={{ color: 'var(--vz-gold-core)', fill: 'var(--vz-gold-core)' }} /> 
-              Velzard Core
+            <h1 style={{ margin: '0.5rem 0 0 0', fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 800, color: 'var(--text-pure)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Zap size={36} strokeWidth={1.5} style={{ color: 'var(--vz-gold-core)', fill: 'var(--vz-gold-core)' }} /> Velzard Core
             </h1>
           </div>
           <button 
             onClick={() => { setIsModalOpen(true); setStep(1); }}
-            style={{ 
-              background: 'linear-gradient(135deg, var(--vz-gold-core), #b45309)', color: '#000', border: 'none', 
-              padding: '0.85rem 1.5rem', borderRadius: 'var(--radius-sm)', fontWeight: 800, cursor: 'pointer', 
-              transition: 'all var(--transition-fast)', display: 'flex', alignItems: 'center', gap: '0.5rem', 
-              boxShadow: '0 0 20px rgba(245, 203, 92, 0.3)', textTransform: 'uppercase', letterSpacing: '0.05em' 
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 0 30px rgba(245, 203, 92, 0.5)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(245, 203, 92, 0.3)'; }}
+            style={{ background: 'linear-gradient(135deg, var(--vz-gold-core), #b45309)', color: '#000', border: 'none', padding: '0.85rem 1.5rem', borderRadius: 'var(--radius-sm)', fontWeight: 800, cursor: 'pointer', transition: 'all var(--transition-fast)', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 0 20px rgba(245, 203, 92, 0.3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}
           >
-            <Zap size={16} fill="#000" /> Ignite Cluster
+            <Zap size={16} fill="#000" strokeWidth={1.5} /> Ignite Cluster
           </button>
         </div>
 
-        {/* --- DEPLOYMENTS MATRIX --- */}
-        <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
+        <motion.div variants={containerVariants} initial="hidden" animate="show" className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
-              <tr style={{ background: 'rgba(0,0,0,0.4)' }}>
+              <tr style={{ background: 'var(--bg-layer-2)' }}>
                 <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-subtle)' }}>Entity Target</th>
                 <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-subtle)' }}>Current State</th>
                 <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-subtle)' }}>Gateway IP</th>
@@ -292,89 +262,65 @@ routes:
             </thead>
             <tbody>
               {sortedDeployments.length === 0 ? (
-                <tr>
+                <motion.tr variants={itemVariants}>
                   <td colSpan="4" style={{ textAlign: 'center', padding: '6rem 2rem', color: 'var(--text-muted)' }}>
-                    <Server size={48} style={{ opacity: 0.3, margin: '0 auto 1rem', color: 'var(--vz-gold-core)' }} />
+                    <Server size={48} strokeWidth={1.5} style={{ opacity: 0.3, margin: '0 auto 1rem', color: 'var(--vz-gold-core)' }} />
                     <p style={{ fontSize: '0.9rem', letterSpacing: '0.05em', textTransform: 'uppercase', fontWeight: 600 }}>No storms active in this sector.</p>
                   </td>
-                </tr>
+                </motion.tr>
               ) : (
                 sortedDeployments.map(dep => {
                   const isExpanded = expandedRowId === dep.id;
-                  
                   return (
                     <React.Fragment key={dep.id}>
-                      {/* STANDARD ROW */}
-                      <tr 
-                        style={{ cursor: 'pointer', background: isExpanded ? 'var(--vz-gold-glow)' : 'transparent', transition: 'background var(--transition-fast)', borderBottom: isExpanded ? 'none' : '1px solid var(--border-subtle)' }}
-                        onClick={() => toggleRowExpansion(dep.id)}
-                      >
+                      <motion.tr variants={itemVariants} style={{ cursor: 'pointer', background: isExpanded ? 'var(--vz-gold-glow)' : 'transparent', transition: 'background var(--transition-fast)', borderBottom: isExpanded ? 'none' : '1px solid var(--border-subtle)' }} onClick={() => toggleRowExpansion(dep.id)}>
                         <td style={{ padding: '1.5rem', fontWeight: 700, color: 'var(--text-pure)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <ChevronDown size={18} style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(-90deg)', transition: 'transform 0.3s', color: 'var(--vz-gold-core)' }} />
+                          <ChevronDown size={18} strokeWidth={1.5} style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(-90deg)', transition: 'transform 0.3s', color: 'var(--vz-gold-core)' }} />
                           {dep.github_repo_url.replace('https://github.com/', '')}
                         </td>
                         <td style={{ padding: '1.5rem' }}>
-                          <span style={{ 
-                            display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.75rem', 
-                            borderRadius: 'var(--radius-sm)', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
-                            background: dep.status === 'RUNNING' ? 'rgba(245, 203, 92, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                            color: dep.status === 'RUNNING' ? 'var(--vz-gold-core)' : 'var(--text-muted)',
-                            border: `1px solid ${dep.status === 'RUNNING' ? 'var(--vz-gold-border)' : 'var(--border-subtle)'}`
-                          }}>
-                            {dep.status === 'RUNNING' ? <><Zap size={12} fill="var(--vz-gold-core)"/> ASCENDED</> : 
-                             dep.status === 'PROVISIONING' ? <><Loader2 size={12} style={{ animation: 'spin 2s linear infinite' }}/> STORMBOUND</> : 
-                             dep.status}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', background: dep.status === 'RUNNING' ? 'rgba(245, 203, 92, 0.15)' : 'var(--bg-layer-2)', color: dep.status === 'RUNNING' ? 'var(--vz-gold-core)' : 'var(--text-muted)', border: `1px solid ${dep.status === 'RUNNING' ? 'var(--vz-gold-border)' : 'var(--border-subtle)'}` }}>
+                            {dep.status === 'RUNNING' ? <><Zap size={12} fill="var(--vz-gold-core)"/> ASCENDED</> : dep.status === 'PROVISIONING' ? <><Loader2 size={12} style={{ animation: 'spin 2s linear infinite' }}/> STORMBOUND</> : dep.status}
                           </span>
                         </td>
-                        <td style={{ padding: '1.5rem', fontFamily: 'monospace', color: 'var(--vz-gold-core)', fontWeight: 600, fontSize: '0.85rem' }}>
+                        <td style={{ padding: '1.5rem', fontFamily: 'var(--font-mono)', color: 'var(--vz-gold-core)', fontWeight: 600, fontSize: '0.85rem' }}>
                           {dep.elastic_ip ? (
                             <a href={`http://${dep.elastic_ip}`} target="_blank" rel="noreferrer" style={{ color: 'var(--vz-gold-core)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }} onClick={(e) => e.stopPropagation()}>
-                              {dep.elastic_ip} <ExternalLink size={12} />
+                              {dep.elastic_ip} <ExternalLink size={12} strokeWidth={1.5} />
                             </a>
                           ) : <span style={{ color: 'var(--text-muted)' }}>Awaiting...</span>}
                         </td>
                         <td style={{ padding: '1.5rem', textAlign: 'right' }}>
-                          <button 
-                            style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }} 
-                            onClick={(e) => handleDestroyCluster(dep.id, e)}
-                          >
-                            <XCircle size={14} /> Terminate
+                          <button style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }} onClick={(e) => handleDestroyCluster(dep.id, e)}>
+                            <XCircle size={14} strokeWidth={1.5} /> Terminate
                           </button>
                         </td>
-                      </tr>
+                      </motion.tr>
 
-                      {/* EXPANDED TELEMETRY DASHBOARD */}
                       <AnimatePresence>
                         {isExpanded && (
-                          <motion.tr 
-                            initial={{ opacity: 0, height: 0 }} 
-                            animate={{ opacity: 1, height: 'auto' }} 
-                            exit={{ opacity: 0, height: 0 }}
-                            style={{ background: 'var(--bg-void)', borderBottom: '1px solid var(--border-subtle)' }}
-                          >
+                          <motion.tr initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={springCrisp} style={{ background: 'var(--bg-void)', borderBottom: '1px solid var(--border-subtle)' }}>
                             <td colSpan="4" style={{ padding: '0 2rem 2.5rem 2rem' }}>
                               <div style={{ paddingTop: '1.5rem', borderTop: '1px solid var(--vz-gold-border)' }}>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: '1.5rem' }}>
                                   
-                                  {/* COL 1: ECONOMICS & HARDWARE */}
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                     <div className="glass-panel" style={{ padding: '1.25rem' }}>
                                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}><Cpu size={14} style={{ color: 'var(--vz-gold-core)' }} /> Compute Core</div>
-                                      <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-pure)', fontFamily: 'monospace' }}>AWS {dep.instance_type || 't3.small'}</div>
+                                      <div style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', fontWeight: 800, color: 'var(--text-pure)', fontFamily: 'var(--font-mono)' }}>AWS {dep.instance_type || 't3.small'}</div>
                                       <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem' }}>{dep.volume_size || 30} GB EBS Storage</div>
                                     </div>
                                     <div className="glass-panel" style={{ padding: '1.25rem' }}>
                                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}><Clock size={14} style={{ color: '#a78bfa' }} /> Storm Duration</div>
-                                      <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#a78bfa', fontFamily: 'monospace' }}>{calculateUptime(dep.created_at)}</div>
+                                      <div style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', fontWeight: 800, color: '#a78bfa', fontFamily: 'var(--font-mono)' }}>{calculateUptime(dep.created_at)}</div>
                                     </div>
                                     <div className="glass-panel" style={{ padding: '1.25rem', border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)' }}>
                                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}><DollarSign size={14} style={{ color: '#10b981' }} /> Accrued Energy Cost</div>
-                                      <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#10b981', fontFamily: 'monospace' }}>${calculateCost(dep.created_at)}</div>
+                                      <div style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', fontWeight: 800, color: '#10b981', fontFamily: 'var(--font-mono)' }}>${calculateCost(dep.created_at)}</div>
                                       <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem' }}>Rate: $0.0208 / hr</div>
                                     </div>
                                   </div>
 
-                                  {/* COL 2: REAL-TIME GRAPHS (Custom Telemetry Chart) */}
                                   <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', padding: '1.5rem' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={14} style={{ color: 'var(--vz-gold-core)' }} /> Live Pulse Telemetry</div>
@@ -384,8 +330,8 @@ routes:
                                       </div>
                                     </div>
                                     <div style={{ flex: 1, minHeight: '200px', position: 'relative' }}>
-                                      {dep.status === 'RUNNING' && dep.telemetry_history?.length > 0 ? (
-                                        <TelemetryChart data={dep.telemetry_history} />
+                                      {dep.status === 'RUNNING' && metrics ? (
+                                        <TelemetryChart data={metrics.cpu.map((c, i) => ({ cpu: c, ram: metrics.ram[i] }))} />
                                       ) : (
                                         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', gap: '0.5rem' }}>
                                           <Loader2 size={24} style={{ animation: 'spin 2s linear infinite', color: 'var(--vz-gold-core)' }} />
@@ -395,20 +341,19 @@ routes:
                                     </div>
                                   </div>
 
-                                  {/* COL 3: CONTAINER MATRIX */}
                                   <div className="glass-panel" style={{ overflowY: 'auto', padding: '1.5rem' }}>
                                     <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}><Box size={14} style={{ color: '#38bdf8' }} /> Dragon Scale Matrix</div>
                                     {dep.status === 'RUNNING' && dep.container_status?.length > 0 ? (
                                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                         {dep.container_status.map(container => (
-                                          <div key={container.ID} style={{ background: 'var(--bg-void)', border: '1px solid rgba(245, 203, 92, 0.2)', padding: '1rem', borderLeft: `4px solid ${container.State.includes('Up') ? 'var(--vz-gold-core)' : '#ef4444'}`, borderRadius: '0 var(--radius-sm) var(--radius-sm) 0' }}>
+                                          <div key={container.ID} style={{ background: 'var(--bg-layer-2)', border: '1px solid rgba(245, 203, 92, 0.2)', padding: '1rem', borderLeft: `4px solid ${container.State.includes('Up') ? 'var(--vz-gold-core)' : '#ef4444'}`, borderRadius: '0 var(--radius-sm) var(--radius-sm) 0' }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                                               <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-pure)' }}>{container.Names}</span>
                                               <span style={{ fontSize: '0.65rem', fontWeight: 800, color: container.State.includes('Up') ? 'var(--vz-gold-core)' : '#ef4444', letterSpacing: '0.05em' }}>
                                                 {container.State.includes('Up') ? '⚡ ACTIVE' : 'DOWN'}
                                               </span>
                                             </div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
                                               {container.Ports || 'Internal Network'}
                                             </div>
                                           </div>
@@ -420,12 +365,11 @@ routes:
                                   </div>
                                 </div>
 
-                                {/* TERMINAL LOGS ROW */}
                                 <div style={{ marginTop: '1.5rem', background: '#000', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800 }}>
                                     <TerminalSquare size={14} style={{ color: 'var(--vz-gold-core)' }} /> Live Output Stream
                                   </div>
-                                  <div style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--text-pure)', maxHeight: '150px', overflowY: 'auto', lineHeight: 1.8 }}>
+                                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-pure)', maxHeight: '150px', overflowY: 'auto', lineHeight: 1.8 }}>
                                     <div style={{ color: 'var(--text-muted)' }}>[{new Date().toISOString().split('T')[1].slice(0,8)}] Storm core initialized.</div>
                                     <div style={{ color: 'var(--text-muted)' }}>[{new Date().toISOString().split('T')[1].slice(0,8)}] Node allocation: {dep.aws_instance_id || 'Pending'}</div>
                                     {dep.status === 'PROVISIONING' && <div><span style={{color:'var(--vz-gold-core)'}}>⚡</span> Negotiating raw compute from AWS matrix...</div>}
@@ -445,61 +389,46 @@ routes:
               )}
             </tbody>
           </table>
-        </div>
+        </motion.div>
       </div>
 
-      {/* ========================================== */}
-      {/* THE DEPLOYMENT WIZARD MODAL                  */}
-      {/* ========================================== */}
       <AnimatePresence>
         {isModalOpen && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="glass-panel" style={{ width: '100%', maxWidth: '650px', padding: '3rem', position: 'relative' }}>
-              <button 
-                onClick={() => setIsModalOpen(false)} 
-                style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color var(--transition-fast)' }} 
-                onMouseEnter={e => e.currentTarget.style.color = 'var(--text-pure)'} 
-                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-              >
-                <XCircle size={24} />
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(24px) saturate(180%)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+            <motion.div variants={itemVariants} initial="hidden" animate="show" exit="hidden" transition={springModal} className="glass-panel" style={{ width: '100%', maxWidth: '650px', padding: '3rem', position: 'relative' }}>
+              <button onClick={() => setIsModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color var(--transition-fast)' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--text-pure)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+                <XCircle size={24} strokeWidth={1.5} />
               </button>
               
-              <h2 style={{ marginTop: 0, color: 'var(--text-pure)', fontSize: '2rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '1rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
+              <h2 style={{ marginTop: 0, color: 'var(--text-pure)', fontSize: 'clamp(1.5rem, 3vw, 2rem)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '1rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
                 <Zap style={{ color: 'var(--vz-gold-core)', fill: 'var(--vz-gold-core)' }} size={28} /> Initialize Storm
               </h2>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '2.5rem', lineHeight: 1.6 }}>Define your architectural contract to summon infrastructure.</p>
 
               <div style={{ display: 'flex', gap: '1rem', marginBottom: '2.5rem' }}>
-                <div style={{ flex: 1, height: '4px', background: step >= 1 ? 'var(--vz-gold-core)' : 'var(--bg-surface)', borderRadius: '2px', transition: 'all var(--transition-smooth)' }}></div>
-                <div style={{ flex: 1, height: '4px', background: step >= 2 ? 'var(--vz-gold-core)' : 'var(--bg-surface)', borderRadius: '2px', transition: 'all var(--transition-smooth)' }}></div>
-                <div style={{ flex: 1, height: '4px', background: step >= 3 ? 'var(--vz-gold-core)' : 'var(--bg-surface)', borderRadius: '2px', transition: 'all var(--transition-smooth)' }}></div>
+                {[1, 2, 3].map((s) => (
+                  <div key={s} style={{ flex: 1, position: 'relative', height: '4px', background: 'var(--bg-layer-2)', borderRadius: '2px' }}>
+                    {step >= s && <motion.div layoutId="stepperProgress" initial={{ width: 0 }} animate={{ width: '100%' }} transition={springCrisp} style={{ position: 'absolute', inset: 0, background: 'var(--vz-gold-core)', borderRadius: '2px' }} />}
+                  </div>
+                ))}
               </div>
 
               {step === 1 && (
-                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={springPage}>
                   <label style={{ display: 'block', color: 'var(--vz-gold-core)', fontSize: '0.75rem', fontWeight: 800, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Target Repository</label>
                   
                   <div style={{ position: 'relative', width: '100%', marginBottom: '2rem', userSelect: 'none' }}>
-                    <div 
-                      style={{ width: '100%', padding: '1.25rem', background: 'var(--bg-void)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', color: 'var(--text-pure)', fontSize: '0.95rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} 
-                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    >
+                    <div style={{ width: '100%', padding: '1.25rem', background: 'var(--bg-layer-2)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', color: 'var(--text-pure)', fontSize: '0.95rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
                       <span style={{ color: selectedRepo ? 'var(--text-pure)' : 'var(--text-muted)', fontWeight: selectedRepo ? 700 : 400 }}>{selectedRepo || "Select authorized repository..."}</span>
-                      <ChevronDown size={18} style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform var(--transition-smooth)', color: 'var(--vz-gold-core)' }} />
+                      <ChevronDown size={18} strokeWidth={1.5} style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform var(--transition-smooth)', color: 'var(--vz-gold-core)' }} />
                     </div>
                     {isDropdownOpen && (
-                      <div style={{ position: 'absolute', top: '110%', left: 0, right: 0, background: 'var(--bg-void)', border: '1px solid var(--vz-gold-core)', borderRadius: 'var(--radius-sm)', maxHeight: '250px', overflowY: 'auto', zIndex: 200, boxShadow: 'var(--shadow-void)' }}>
+                      <div style={{ position: 'absolute', top: '110%', left: 0, right: 0, background: 'var(--bg-layer-2)', backdropFilter: 'blur(24px)', border: '1px solid var(--vz-gold-core)', borderRadius: 'var(--radius-sm)', maxHeight: '250px', overflowY: 'auto', zIndex: 200, boxShadow: 'var(--shadow-void)' }}>
                         {repos.length === 0 ? (
                           <div style={{ padding: '1rem', color: 'var(--text-muted)' }}>No repositories found.</div>
                         ) : (
                           repos.map(repo => (
-                            <div 
-                              key={repo} 
-                              style={{ padding: '1rem 1.25rem', color: 'var(--text-muted)', cursor: 'pointer', borderBottom: '1px solid var(--border-subtle)', transition: 'all var(--transition-fast)' }}
-                              onClick={() => { setSelectedRepo(repo); setIsDropdownOpen(false); }}
-                              onMouseEnter={e => { e.currentTarget.style.color = 'var(--vz-gold-core)'; e.currentTarget.style.background = 'var(--vz-gold-glow)'; }}
-                              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
-                            >
+                            <div key={repo} style={{ padding: '1rem 1.25rem', color: 'var(--text-muted)', cursor: 'pointer', borderBottom: '1px solid var(--border-subtle)', transition: 'all var(--transition-fast)' }} onClick={() => { setSelectedRepo(repo); setIsDropdownOpen(false); }} onMouseEnter={e => { e.currentTarget.style.color = 'var(--vz-gold-core)'; e.currentTarget.style.background = 'var(--vz-gold-glow)'; }} onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}>
                               {repo}
                             </div>
                           ))
@@ -513,23 +442,9 @@ routes:
                       <label style={{ display: 'block', color: 'var(--vz-gold-core)', fontSize: '0.75rem', fontWeight: 800, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Hardware Tier</label>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                         {['t3.small', 't3.medium', 'c5.large'].map(type => (
-                          <div 
-                            key={type}
-                            onClick={() => setInstanceType(type)}
-                            style={{ 
-                              padding: '1rem', 
-                              border: `1px solid ${instanceType === type ? 'var(--vz-gold-core)' : 'var(--border-subtle)'}`, 
-                              background: instanceType === type ? 'var(--vz-gold-glow)' : 'var(--bg-void)',
-                              borderRadius: 'var(--radius-sm)', 
-                              cursor: 'pointer', 
-                              transition: 'all 0.2s',
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center'
-                            }}
-                          >
-                            <span style={{ color: 'var(--text-pure)', fontWeight: 700, fontFamily: 'monospace' }}>{type}</span>
-                            {instanceType === type && <CheckCircle2 size={16} color="var(--vz-gold-core)" />}
+                          <div key={type} onClick={() => setInstanceType(type)} style={{ padding: '1rem', border: `1px solid ${instanceType === type ? 'var(--vz-gold-core)' : 'var(--border-subtle)'}`, background: instanceType === type ? 'var(--vz-gold-glow)' : 'var(--bg-layer-2)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: 'var(--text-pure)', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{type}</span>
+                            {instanceType === type && <CheckCircle2 size={16} strokeWidth={1.5} color="var(--vz-gold-core)" />}
                           </div>
                         ))}
                       </div>
@@ -537,17 +452,9 @@ routes:
                     
                     <div>
                       <label style={{ display: 'block', color: 'var(--vz-gold-core)', fontSize: '0.75rem', fontWeight: 800, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>EBS Storage (GB)</label>
-                      <div style={{ padding: '1.5rem', background: 'var(--bg-void)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
-                        <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-pure)', fontFamily: 'monospace' }}>{volumeSize} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>GB</span></div>
-                        <input 
-                          type="range" 
-                          min="10" 
-                          max="200" 
-                          step="10"
-                          value={volumeSize} 
-                          onChange={(e) => setVolumeSize(e.target.value)}
-                          style={{ width: '100%', accentColor: 'var(--vz-gold-core)', cursor: 'pointer' }}
-                        />
+                      <div style={{ padding: '1.5rem', background: 'var(--bg-layer-2)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
+                        <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-pure)', fontFamily: 'var(--font-mono)' }}>{volumeSize} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>GB</span></div>
+                        <input type="range" min="10" max="200" step="10" value={volumeSize} onChange={(e) => setVolumeSize(e.target.value)} style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', cursor: 'pointer', accentColor: 'var(--vz-gold-core)' }} />
                         <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                           <span>10 GB</span>
                           <span>200 GB</span>
@@ -556,34 +463,30 @@ routes:
                     </div>
                   </div>
 
-                  <button 
-                    style={{ width: '100%', justifyContent: 'center', padding: '1.25rem', background: 'linear-gradient(135deg, var(--vz-gold-core), #b45309)', color: '#000', border: 'none', borderRadius: 'var(--radius-sm)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: selectedRepo ? 'pointer' : 'not-allowed', opacity: selectedRepo ? 1 : 0.5 }} 
-                    disabled={!selectedRepo} 
-                    onClick={handleStartDeployment}
-                  >
-                    Generate Contract <ExternalLink size={18} />
+                  <button style={{ width: '100%', justifyContent: 'center', padding: '1.25rem', background: 'linear-gradient(135deg, var(--vz-gold-core), #b45309)', color: '#000', border: 'none', borderRadius: 'var(--radius-sm)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: selectedRepo ? 'pointer' : 'not-allowed', opacity: selectedRepo ? 1 : 0.5 }} disabled={!selectedRepo} onClick={handleStartDeployment}>
+                    Generate Contract <ExternalLink size={18} strokeWidth={1.5} />
                   </button>
                 </motion.div>
               )}
 
               {step === 2 && (
-                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={springPage}>
                   <p style={{ color: 'var(--text-pure)', fontSize: '0.95rem', marginBottom: '1.25rem' }}>Blueprint generated for <b style={{color: 'var(--vz-gold-core)'}}>{selectedRepo}</b>.</p>
-                  <div style={{ background: '#000', padding: '1.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', fontFamily: 'monospace', color: 'var(--text-muted)', fontSize: '0.8rem', whiteSpace: 'pre-wrap', marginBottom: '2.5rem', maxHeight: '300px', overflowY: 'auto' }}>
+                  <div style={{ background: '#000', padding: '1.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', fontSize: '0.8rem', whiteSpace: 'pre-wrap', marginBottom: '2.5rem', maxHeight: '300px', overflowY: 'auto' }}>
                     {yamlTemplate}
                   </div>
                   <div style={{ display: 'flex', gap: '1rem' }}>
                     <button style={{ background: 'transparent', border: '1px solid var(--border-subtle)', color: 'var(--text-pure)', padding: '1rem', borderRadius: 'var(--radius-sm)', flex: 1, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }} onClick={() => setStep(1)}>Go Back</button>
                     <button onClick={handleCommitToGitHub} style={{ flex: 2, justifyContent: 'center', background: 'linear-gradient(135deg, var(--vz-gold-core), #b45309)', color: '#000', border: 'none', padding: '1rem', borderRadius: 'var(--radius-sm)', fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                      Commit via GitHub <ExternalLink size={16} />
+                      Commit via GitHub <ExternalLink size={16} strokeWidth={1.5} />
                     </button>
                   </div>
                 </motion.div>
               )}
 
               {step === 3 && (
-                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-                  <div style={{ background: 'var(--bg-void)', border: '1px dashed var(--vz-gold-core)', padding: '2.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center', marginBottom: '2.5rem' }}>
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={springPage}>
+                  <div style={{ background: 'var(--bg-layer-2)', border: '1px dashed var(--vz-gold-core)', padding: '2.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center', marginBottom: '2.5rem' }}>
                     <h3 style={{ color: 'var(--text-pure)', margin: '0 0 1rem 0', fontSize: '1.5rem' }}>Awaiting Uplink Verification</h3>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '2rem', lineHeight: 1.5 }}>Velzard will scan the <code>main</code> branch of your repository for the <code>velzion.yaml</code> file to lock the state.</p>
                     
@@ -595,16 +498,12 @@ routes:
                     )}
                     {verificationStatus === 'success' && (
                       <div style={{ color: 'var(--vz-gold-core)', display: 'inline-flex', alignItems: 'center', gap: '0.75rem', fontWeight: 800, fontSize: '1rem', background: 'var(--vz-gold-glow)', padding: '1rem 2rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--vz-gold-core)', textTransform: 'uppercase' }}>
-                        <CheckCircle2 size={20} /> Contract Secured
+                        <CheckCircle2 size={20} strokeWidth={1.5} /> Contract Secured
                       </div>
                     )}
                   </div>
-                  <button 
-                    style={{ width: '100%', justifyContent: 'center', padding: '1.5rem', fontSize: '1.25rem', background: 'linear-gradient(135deg, var(--vz-gold-core), #b45309)', color: '#000', border: 'none', borderRadius: 'var(--radius-sm)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: verificationStatus !== 'success' || launchStatus === 'loading' ? 'not-allowed' : 'pointer', opacity: verificationStatus !== 'success' || launchStatus === 'loading' ? 0.5 : 1 }} 
-                    disabled={verificationStatus !== 'success' || launchStatus === 'loading'}
-                    onClick={handleLaunchProduction}
-                  >
-                    {launchStatus === 'loading' ? <><Loader2 size={24} style={{ animation: 'spin 2s linear infinite' }} /> Executing Storm Core...</> : <><Zap size={24} fill="#000" /> IGNITE CLUSTER</>}
+                  <button style={{ width: '100%', justifyContent: 'center', padding: '1.5rem', fontSize: '1.25rem', background: 'linear-gradient(135deg, var(--vz-gold-core), #b45309)', color: '#000', border: 'none', borderRadius: 'var(--radius-sm)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: verificationStatus !== 'success' || launchStatus === 'loading' ? 'not-allowed' : 'pointer', opacity: verificationStatus !== 'success' || launchStatus === 'loading' ? 0.5 : 1 }} disabled={verificationStatus !== 'success' || launchStatus === 'loading'} onClick={handleLaunchProduction}>
+                    {launchStatus === 'loading' ? <><Loader2 size={24} style={{ animation: 'spin 2s linear infinite' }} /> Executing Storm Core...</> : <><Zap size={24} fill="#000" strokeWidth={1.5} /> IGNITE CLUSTER</>}
                   </button>
                 </motion.div>
               )}

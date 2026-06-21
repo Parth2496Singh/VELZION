@@ -9,8 +9,12 @@ import './index.css';
 // We are driving our entire theme exclusively through index.css.
 import './App.css';
 
+import { TelemetryProvider } from './context/TelemetryContext.jsx';
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <TelemetryProvider>
+      <App />
+    </TelemetryProvider>
   </React.StrictMode>,
 );

@@ -15,89 +15,93 @@ const instanceData = {
   ]
 };
 
+const springPage = { type: "spring", stiffness: 280, damping: 28 };
+const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05, delayChildren: 0.02 } } };
+const itemVariants = { hidden: { opacity: 0, y: 12, scale: 0.98 }, show: { opacity: 1, y: 0, scale: 1, transition: springPage } };
+
 export default function InstanceGuide() {
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+    <motion.div variants={containerVariants} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
       
-      <header>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-pure)', marginBottom: '1rem' }}>Instance Guide</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Select the correct compute profile for your architectural pattern.</p>
-      </header>
+      <motion.header variants={itemVariants}>
+        <h1 style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', fontWeight: 800, color: 'var(--text-pure)', marginBottom: '1rem', letterSpacing: '-0.02em' }}>Instance Guide</h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', margin: 0 }}>Select the correct compute profile for your architectural pattern.</p>
+      </motion.header>
 
       {/* Velzard Production Tier */}
-      <section>
-        <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', color: 'var(--vz-gold-core)' }}>
-          <Server size={24} /> Velzard Production Tier (On-Demand)
+      <motion.section variants={itemVariants}>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', color: 'var(--vz-gold-core)', fontSize: 'clamp(1.25rem, 3vw, 1.5rem)', fontWeight: 800 }}>
+          <Server size={24} strokeWidth={1.5} /> Velzard Production Tier (On-Demand)
         </h2>
-        <div className="glass-panel" style={{ overflowX: 'auto' }}>
+        <div className="glass-panel" style={{ overflowX: 'auto', background: 'var(--bg-layer-2)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
-              <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
-                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>Instance</th>
-                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>Hourly</th>
-                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>vCPU/RAM</th>
-                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>Networking</th>
-                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>Best For</th>
+              <tr style={{ background: 'var(--bg-layer-1)' }}>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-pure)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase' }}>Instance</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-pure)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase' }}>Hourly</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-pure)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase' }}>vCPU/RAM</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-pure)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase' }}>Networking</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-pure)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase' }}>Best For</th>
               </tr>
             </thead>
             <tbody>
-              {instanceData.velzard.map(i => (
-                <tr key={i.name} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+              {instanceData.velzard.map((i, index) => (
+                <tr key={i.name} style={{ borderBottom: index === instanceData.velzard.length - 1 ? 'none' : '1px solid var(--border-subtle)' }}>
                   <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--text-pure)' }}>{i.name}</td>
-                  <td style={{ padding: '1rem', color: 'var(--vz-gold-core)', fontFamily: 'monospace' }}>{i.cost}</td>
-                  <td style={{ padding: '1rem' }}>{i.vcpu} vCPU / {i.ram}</td>
-                  <td style={{ padding: '1rem' }}>{i.net}</td>
+                  <td style={{ padding: '1rem', color: 'var(--vz-gold-core)', fontFamily: 'var(--font-mono)' }}>{i.cost}</td>
+                  <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{i.vcpu} vCPU / {i.ram}</td>
+                  <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{i.net}</td>
                   <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{i.usage}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </section>
+      </motion.section>
 
       {/* Zegion Ephemeral Tier */}
-      <section>
-        <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', color: 'var(--zg-purple-core)' }}>
-          <Zap size={24} /> Zegion Ephemeral Tier (Spot-Optimized)
+      <motion.section variants={itemVariants}>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', color: 'var(--zg-purple-core)', fontSize: 'clamp(1.25rem, 3vw, 1.5rem)', fontWeight: 800 }}>
+          <Zap size={24} strokeWidth={1.5} /> Zegion Ephemeral Tier (Spot-Optimized)
         </h2>
-        <div className="glass-panel" style={{ overflowX: 'auto' }}>
+        <div className="glass-panel" style={{ overflowX: 'auto', background: 'var(--bg-layer-2)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
-              <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
-                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>Instance</th>
-                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>Spot Hourly</th>
-                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>Specs</th>
-                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>Recommended For</th>
+              <tr style={{ background: 'var(--bg-layer-1)' }}>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-pure)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase' }}>Instance</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-pure)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase' }}>Spot Hourly</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-pure)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase' }}>Specs</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-pure)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase' }}>Recommended For</th>
               </tr>
             </thead>
             <tbody>
-              {instanceData.zegion.map(i => (
-                <tr key={i.name} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+              {instanceData.zegion.map((i, index) => (
+                <tr key={i.name} style={{ borderBottom: index === instanceData.zegion.length - 1 ? 'none' : '1px solid var(--border-subtle)' }}>
                   <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--text-pure)' }}>{i.name}</td>
-                  <td style={{ padding: '1rem', color: 'var(--zg-purple-core)', fontFamily: 'monospace' }}>{i.cost}</td>
-                  <td style={{ padding: '1rem' }}>{i.vcpu} vCPU / {i.ram}</td>
+                  <td style={{ padding: '1rem', color: 'var(--zg-purple-core)', fontFamily: 'var(--font-mono)' }}>{i.cost}</td>
+                  <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{i.vcpu} vCPU / {i.ram}</td>
                   <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{i.usage}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </section>
+      </motion.section>
 
       {/* Architectural Guidance */}
-      <section className="glass-panel" style={{ padding: '2rem' }}>
-        <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Architectural Guidance</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+      <motion.section variants={itemVariants} className="glass-panel" style={{ padding: '2rem', background: 'var(--bg-layer-2)' }}>
+        <h2 style={{ fontSize: 'clamp(1.25rem, 3vw, 1.5rem)', marginBottom: '1.5rem', color: 'var(--text-pure)', fontWeight: 800 }}>Architectural Guidance</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
           <div>
-            <h4 style={{ color: 'var(--text-pure)', marginBottom: '0.5rem' }}>Microservices</h4>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>Deploy multiple t3.micro/small instances. Distribute service logic across separate containers to avoid noisy neighbor syndrome.</p>
+            <h4 style={{ color: 'var(--text-pure)', marginBottom: '0.5rem', fontWeight: 700, fontSize: '1.1rem' }}>Microservices</h4>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>Deploy multiple t3.micro/small instances. Distribute service logic across separate containers to avoid noisy neighbor syndrome.</p>
           </div>
           <div>
-            <h4 style={{ color: 'var(--text-pure)', marginBottom: '0.5rem' }}>3-Tier Web Applications</h4>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>Use m7i-flex.large for the App tier to ensure ample headroom for request buffering, and c7i-flex.large for compute-heavy processing nodes.</p>
+            <h4 style={{ color: 'var(--text-pure)', marginBottom: '0.5rem', fontWeight: 700, fontSize: '1.1rem' }}>3-Tier Web Applications</h4>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>Use m7i-flex.large for the App tier to ensure ample headroom for request buffering, and c7i-flex.large for compute-heavy processing nodes.</p>
           </div>
         </div>
-      </section>
+      </motion.section>
 
     </motion.div>
   );

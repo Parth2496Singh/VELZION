@@ -41,11 +41,19 @@ const CryptographicCore = () => (
   </div>
 );
 
+import { Navigate } from 'react-router-dom';
+
 // ----------------------------------------------------------------------
 // 🔐 MAIN LOGIN COMPONENT
 // ----------------------------------------------------------------------
 export default function Login() {
   const [loading, setLoading] = useState(false);
+
+  // Auto-redirect if already logged in
+  const isAuthenticated = localStorage.getItem('velzion_user');
+  if (isAuthenticated) {
+    return <Navigate to="/zegion/dashboard" replace />;
+  }
 
   // Preserved Axios Logic
   const handleGitHubLogin = async () => {
