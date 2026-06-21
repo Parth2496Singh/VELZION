@@ -260,15 +260,22 @@ docker-compose -f docker-compose.prod.yml up -d --build
 ```
 *(The `-d` flag runs it in the background so it stays alive when you close your SSH terminal).*
 
-**Step 6: Access Velzion**
-Open your web browser and go to your EC2's Public IP address! (e.g., `http://54.12.34.56`)
+**Step 7: Import & Activate n8n Workflows (Detailed Beginner Guide)**
+For Velzion to orchestrate infrastructure, the n8n engine needs its instructions. Follow these exact steps to load the Velzard and Zegion workflows:
 
-**Step 7: Import & Activate n8n Workflows**
-For Velzion to orchestrate infrastructure, n8n needs its instructions.
-1. Go to your n8n dashboard (`http://your-ec2-ip:5678`) and complete the initial owner setup.
-2. Go to **Workflows** -> **Add Workflow** -> **Import from File**.
-3. Import `VELZARD-WORKFLOW.json` and `ZEGION WORKFLOW.json` from the `workflows/` directory in this repo.
-4. **CRITICAL:** Toggle the switch in the top right corner of the n8n UI from **Inactive** to **Active**. If you don't do this, Django will get a `404 Not Found` when trying to trigger deployments!
+1. **Access the n8n Dashboard:** Open your web browser and go to your EC2's n8n port: `http://your-ec2-ip:5678` (Make sure Port 5678 is open in your AWS Security Groups).
+2. **Initial Setup:** You will be prompted to create an owner account. Enter your email and a secure password.
+3. **Navigate to Workflows:** Once logged in, click on **Workflows** in the left-hand menu, then click the **"Add Workflow"** button in the top right.
+4. **Copy the Workflow Code:** 
+   - Open a new tab and go to the Velzion GitHub repository: `https://github.com/Parth2496Singh/VELZION`
+   - Navigate to the `workflows/` folder.
+   - Click on `VELZARD-WORKFLOW.json`.
+   - Click the "Copy raw file" button (the two squares icon near the top right of the code block) to copy the entire JSON code to your clipboard.
+5. **Paste into n8n:** Go back to your n8n dashboard (where you have the new blank workflow open). Simply click anywhere on the blank canvas and **Paste (CTRL+V or CMD+V)**. The workflow nodes will magically appear!
+6. **Activate the Workflow (CRITICAL):** 
+   - In the top right corner of the n8n screen, toggle the switch from **Inactive** to **Active**. 
+   - *Why is this important?* If it remains inactive, Django will receive a `404 Not Found` error when it tries to trigger deployments. The workflow must be active to listen to production webhooks!
+7. **Repeat for Zegion:** Repeat steps 3-6, but this time copy the code from `ZEGION WORKFLOW.json`.
 
 </details>
 
