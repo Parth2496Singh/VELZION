@@ -162,3 +162,10 @@ CORS_ALLOW_ALL_ORIGINS = True
 AUTH_USER_MODEL = 'users.UserProfile'
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'users.authentication.CsrfExemptSessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
+}
