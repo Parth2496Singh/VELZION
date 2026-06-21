@@ -41,6 +41,16 @@ export default function TopNavbar() {
       try { setUser(JSON.parse(u)); } catch(e) {}
     }
   }, []);
+
+  const [iamConnected, setIamConnected] = useState(false);
+  React.useEffect(() => {
+    setIamConnected(localStorage.getItem('velzion_iam_connected') === 'true');
+    const handleStorageChange = () => {
+      setIamConnected(localStorage.getItem('velzion_iam_connected') === 'true');
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
   
   // Parse URL for dynamic breadcrumbs
   const pathParts = location.pathname.split('/').filter(Boolean);
@@ -140,22 +150,40 @@ export default function TopNavbar() {
             margin: '0 0.5rem'
           }} />
           
-          <Link to="/Iam-login-page" style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.4rem 0.75rem',
-            borderRadius: 'var(--radius-pill)',
-            border: '1px solid var(--vz-gold-border)',
-            background: 'var(--vz-gold-glow)',
-            color: 'var(--vz-gold-core)',
-            fontSize: '0.8rem',
-            fontWeight: 700,
-            textDecoration: 'none',
-            marginRight: '0.5rem'
-          }}>
-            IAM Login
-          </Link>
+          {iamConnected ? (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.4rem 0.75rem',
+              borderRadius: 'var(--radius-pill)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              background: 'rgba(16, 185, 129, 0.1)',
+              color: '#10b981',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              marginRight: '0.5rem'
+            }}>
+              IAM Connected
+            </div>
+          ) : (
+            <Link to="/Iam-login-page" style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.4rem 0.75rem',
+              borderRadius: 'var(--radius-pill)',
+              border: '1px solid var(--vz-gold-border)',
+              background: 'var(--vz-gold-glow)',
+              color: 'var(--vz-gold-core)',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              textDecoration: 'none',
+              marginRight: '0.5rem'
+            }}>
+              IAM Login
+            </Link>
+          )}
 
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', paddingLeft: '0.5rem' }}>

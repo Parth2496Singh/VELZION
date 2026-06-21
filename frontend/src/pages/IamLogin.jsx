@@ -34,9 +34,10 @@ export default function IamLogin() {
       
       // Simulating network latency for the UI
       setTimeout(() => {
+        localStorage.setItem('velzion_iam_connected', 'true');
         setIamStatus('success');
-        // Optional: Auto-redirect after successful binding
-        // setTimeout(() => navigate('/velzard/dashboard'), 2000);
+        // Dispatch an event so other components (like TopNavbar) can update immediately
+        window.dispatchEvent(new Event('storage'));
       }, 1500);
     } catch (error) {
       console.error("Binding failed", error);

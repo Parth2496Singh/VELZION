@@ -60,7 +60,9 @@ class GitHubCallbackView(APIView):
             user.github_access_token = access_token
             user.save()
 
+        from django.middleware.csrf import get_token
         login(request, user)
+        get_token(request) # Force Django to set the csrftoken cookie
 
         # 🔥 Fetch all workspaces (repos) this user has access to
         repos_list = []
