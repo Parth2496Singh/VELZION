@@ -91,3 +91,12 @@ class GitHubCallbackView(APIView):
             },
             "repos": repos_list
         })
+
+from django.contrib.auth import logout
+class LogoutView(APIView):
+    def post(self, request):
+        logout(request)
+        response = Response({"message": "Logged out successfully"})
+        response.delete_cookie('csrftoken')
+        response.delete_cookie('sessionid')
+        return response

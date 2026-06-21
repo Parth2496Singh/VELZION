@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Search, Bell, Settings, User, ChevronRight } from 'lucide-react';
+import { Search, Bell, Settings, User, ChevronRight, LogOut } from 'lucide-react';
+import axios from 'axios';
 
 // Reusable Icon Button
 const ActionButton = ({ icon: Icon }) => (
@@ -56,6 +57,19 @@ export default function TopNavbar() {
   const pathParts = location.pathname.split('/').filter(Boolean);
   const isVelzard = location.pathname.includes('/velzard');
   
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/users/logout/`);
+    } catch (e) {
+      console.error(e);
+    }
+    localStorage.removeItem('velzion_user');
+    localStorage.removeItem('velzion_iam_connected');
+    setUser(null);
+    setIamConnected(false);
+    window.location.href = '/login';
+  };
+
   const engineName = isVelzard ? 'Velzard' : 'Zegion';
   const engineGradient = isVelzard ? 'text-gradient-velzard' : 'text-gradient-zegion';
   
@@ -198,6 +212,32 @@ export default function TopNavbar() {
                 <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-pure)' }}>{user.username || 'User'}</span>
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>GitHub Identity</span>
               </div>
+              <button onClick={handleLogout} style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '32px',
+                height: '32px',
+                borderRadius: 'var(--radius-pill)',
+                border: '1px solid transparent',
+                color: 'var(--text-muted)',
+                background: 'transparent',
+                cursor: 'pointer',
+                marginLeft: '0.5rem',
+                transition: 'all var(--transition-fast)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#ef4444';
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'var(--text-muted)';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+              title="Logout"
+              >
+                <LogOut size={16} />
+              </button>
             </div>
           ) : (
             <ActionButton icon={User} />
