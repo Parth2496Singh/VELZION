@@ -84,14 +84,15 @@ export default function Login() {
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.6, type: "spring", stiffness: 100, damping: 20 }}
-          className="glass-panel"
+          className="glass-panel spotlight-card"
           style={{
             padding: '3.5rem 3rem',
             width: '100%',
             maxWidth: '440px',
             textAlign: 'center',
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            border: '1px solid rgba(255,255,255,0.08)'
           }}
         >
           {/* Subtle Top Border Highlight */}

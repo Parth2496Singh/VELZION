@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 // Layouts
@@ -32,8 +33,33 @@ import VelzardSetupGuide from './pages/velzard/SetupGuide';
 
 
 export default function App() {
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', 'obsidian-nebula');
+
+    const handleMouseMove = (e) => {
+      const cards = document.querySelectorAll('.spotlight-card, .glass-panel');
+      for (const card of cards) {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+        
+        if (!card.classList.contains('spotlight-card')) {
+           card.classList.add('spotlight-card');
+        }
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   return (
     <Router>
+      <div className="obsidian-canvas">
+        <div className="nebula-glow" />
+      </div>
       <Routes>
         {/* Quality of Life Redirects */}
         <Route path="/home" element={<Navigate to="/" replace />} />

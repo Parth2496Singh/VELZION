@@ -44,8 +44,9 @@ const NavItem = ({ to, icon: Icon, label, exact, activeColor, currentPath }) => 
             style={{
               position: 'absolute',
               top: 0, left: 0, right: 0, bottom: 0,
-              backgroundColor: 'var(--bg-glass-hover)',
-              border: 'var(--border-focus)',
+              backgroundColor: 'var(--bg-layer-2)',
+              border: `1px solid ${activeColor}`,
+              boxShadow: `inset 0 0 10px ${activeColor.replace('1)', '0.1)')}`,
               borderRadius: 'var(--radius-sm)',
               zIndex: -1
             }}
@@ -87,19 +88,22 @@ export default function Sidebar() {
   const activeLinks = isVelzard ? velzardLinks : zegionLinks;
 
   return (
-    <aside className="glass-panel" style={{ 
-      width: '260px', 
-      height: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      borderTop: 'none', 
-      borderLeft: 'none', 
-      borderBottom: 'none', 
-      borderRadius: 0, 
-      padding: '1.5rem',
-      zIndex: 50,
-      flexShrink: 0
-    }}>
+    <div style={{ padding: '1rem', height: '100vh', boxSizing: 'border-box' }}>
+      <aside className="glass-panel spotlight-card" style={{ 
+        width: '260px', 
+        height: '100%', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        border: '1px solid rgba(255,255,255,0.08)', 
+        borderLeft: `2px solid ${activeColor}`,
+        borderRadius: 'var(--radius-lg)', 
+        padding: '1.5rem',
+        zIndex: 50,
+        flexShrink: 0,
+        boxShadow: `0 10px 40px rgba(0,0,0,0.5), inset 0 0 20px ${activeColor.replace('1)', '0.05)')}`,
+        background: 'rgba(5, 5, 5, 0.6)',
+        backdropFilter: 'blur(20px)'
+      }}>
       
       {/* Brand Header */}
       <div style={{ 
@@ -261,5 +265,6 @@ export default function Sidebar() {
       </div>
 
     </aside>
+    </div>
   );
 }

@@ -87,7 +87,7 @@ export default function IamLogin() {
         initial={{ opacity: 0, y: 30 }} 
         animate={{ opacity: 1, y: 0 }} 
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="glass-panel" 
+        className="glass-panel spotlight-card" 
         style={{ padding: '3.5rem', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '850px' }}
       >
         {/* Header */}

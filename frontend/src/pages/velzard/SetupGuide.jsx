@@ -118,25 +118,26 @@ export default function VelzardSetupGuide() {
 
               {steps[activeStep].code && (
                 <div style={{ position: 'relative', marginTop: '2rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-layer-2)', padding: '0.75rem 1.25rem', borderTopLeftRadius: 'var(--radius-sm)', borderTopRightRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', borderBottom: 'none' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>velzion.yaml</span>
-                    <button onClick={() => handleCopy(steps[activeStep].code)} style={{ color: copied ? '#10b981' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', fontWeight: 700, transition: 'color var(--transition-fast)', cursor: 'pointer', background: 'none', border: 'none' }}>
-                      {copied ? <CheckCircle2 size={14} strokeWidth={1.5} /> : <Copy size={14} strokeWidth={1.5} />}
-                      {copied ? 'Copied' : 'Copy'}
-                    </button>
+                  <div className="terminal-block" style={{ marginTop: '2rem', padding: '2rem 1.5rem 1.5rem 1.5rem' }}>
+                    <div style={{ position: 'absolute', top: 12, right: 12 }}>
+                      <button onClick={() => handleCopy(steps[activeStep].code)} style={{ color: copied ? '#10b981' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', fontWeight: 700, transition: 'color var(--transition-fast)', cursor: 'pointer', background: 'none', border: 'none' }}>
+                        {copied ? <CheckCircle2 size={14} strokeWidth={1.5} /> : <Copy size={14} strokeWidth={1.5} />}
+                        {copied ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
+                    <pre style={{ margin: 0, overflowX: 'auto' }}>
+                      <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: 'var(--text-pure)', whiteSpace: 'pre-wrap', lineHeight: 1.5, display: 'block', marginTop: '0.5rem' }}>
+                        {steps[activeStep].code.split('\n').map((line, i) => {
+                          const isComment = line.includes('#');
+                          return (
+                            <div key={i} style={{ color: isComment ? 'var(--text-muted)' : 'inherit' }}>
+                              {line}
+                            </div>
+                          );
+                        })}
+                      </code>
+                    </pre>
                   </div>
-                  <pre style={{ margin: 0, backgroundColor: 'var(--bg-void)', padding: '1.5rem', borderRadius: '0 0 var(--radius-sm) var(--radius-sm)', border: '1px solid var(--border-subtle)', overflowX: 'auto', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)' }}>
-                    <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: 'var(--text-pure)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
-                      {steps[activeStep].code.split('\n').map((line, i) => {
-                        const isComment = line.includes('#');
-                        return (
-                          <div key={i} style={{ color: isComment ? 'var(--text-muted)' : 'inherit' }}>
-                            {line}
-                          </div>
-                        );
-                      })}
-                    </code>
-                  </pre>
                 </div>
               )}
 

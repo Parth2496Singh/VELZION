@@ -24,12 +24,12 @@ const itemVariants = { hidden: { opacity: 0, y: 12, scale: 0.98 }, show: { opaci
 // 🌌 FRAMER MOTION: Lightweight Abstract Cloud Node
 // ----------------------------------------------------------------------
 const HolographicNode = () => (
-  <div style={{ position: 'relative', width: '120px', height: '120px', margin: '0 auto 2rem auto' }}>
-    <motion.div animate={{ rotate: 360, scale: [1, 1.05, 1] }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }} style={{ position: 'absolute', inset: -20, border: '1px solid rgba(157, 78, 221, 0.3)', borderRadius: '50%' }} />
-    <motion.div animate={{ rotate: -360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} style={{ position: 'absolute', inset: 0, border: '2px dashed var(--zg-purple-core)', borderRadius: '50%', opacity: 0.5 }} />
-    <motion.div animate={{ opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} style={{ position: 'absolute', inset: 10, background: 'radial-gradient(circle, var(--zg-purple-core) 0%, transparent 70%)', filter: 'blur(15px)', borderRadius: '50%' }} />
+  <div className="spot-flicker glitch-effect" style={{ position: 'relative', width: '120px', height: '120px', margin: '0 auto 2rem auto', cursor: 'pointer' }}>
+    <motion.div animate={{ rotate: 360, scale: [1, 1.1, 1] }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} style={{ position: 'absolute', inset: -20, border: '1px solid rgba(168, 85, 247, 0.5)', borderRadius: '50%' }} />
+    <motion.div animate={{ rotate: -360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} style={{ position: 'absolute', inset: 0, border: '2px dashed var(--zg-purple-core)', borderRadius: '50%', opacity: 0.8 }} />
+    <motion.div animate={{ opacity: [0.2, 0.8, 0.2], scale: [0.9, 1.2, 0.9] }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }} style={{ position: 'absolute', inset: 10, background: 'radial-gradient(circle, var(--zg-purple-core) 0%, transparent 70%)', filter: 'blur(10px)', borderRadius: '50%' }} />
     <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 10 }}>
-      <Server size={40} style={{ color: 'var(--text-pure)' }} strokeWidth={1.5} />
+      <Server size={40} style={{ color: 'var(--text-pure)', filter: 'drop-shadow(0 0 8px var(--zg-purple-core))' }} strokeWidth={1.5} />
     </div>
   </div>
 );
@@ -183,10 +183,13 @@ export default function Dashboard() {
             <button key={tab} onClick={() => currentWorkspace && setActiveTab(tab)} disabled={!currentWorkspace} style={{ 
                 position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', 
                 color: activeTab === tab ? 'var(--text-pure)' : 'var(--text-muted)', cursor: currentWorkspace ? 'pointer' : 'not-allowed', 
-                opacity: currentWorkspace ? 1 : 0.5, fontWeight: 600, zIndex: 1
-            }}>
+                opacity: currentWorkspace ? 1 : 0.5, fontWeight: 600, zIndex: 1, border: '1px solid transparent', borderRadius: 'var(--radius-sm)'
+            }}
+            onMouseEnter={e => { if (currentWorkspace && activeTab !== tab) e.currentTarget.style.color = 'var(--text-pure)'; }}
+            onMouseLeave={e => { if (currentWorkspace && activeTab !== tab) e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
               {activeTab === tab && (
-                <motion.div layoutId="activePillZegion" transition={springCrisp} style={{ position: 'absolute', inset: 0, background: 'var(--zg-purple-glow)', border: '1px solid var(--zg-purple-border)', borderRadius: 'var(--radius-sm)', zIndex: -1 }} />
+                <motion.div layoutId="activePillZegion" transition={springCrisp} style={{ position: 'absolute', inset: 0, background: 'rgba(168, 85, 247, 0.15)', border: '1px solid var(--zg-purple-border)', borderRadius: 'var(--radius-sm)', zIndex: -1, boxShadow: 'inset 0 0 10px rgba(168, 85, 247, 0.1)' }} />
               )}
               {tab === 'environments' ? <Server size={16} strokeWidth={1.5} /> : <Shield size={16} strokeWidth={1.5} />} 
               {tab === 'environments' ? 'Deployments' : 'IAM Bindings'}
@@ -363,9 +366,11 @@ export default function Dashboard() {
                           {(env.status === 'RUNNING' || env.status === 'SLEEPING') && (
                             <button 
                               onClick={() => handleDestroy(env)} disabled={isPipelineBusy} 
-                              style={{ background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-sm)', cursor: isPipelineBusy ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: 700, transition: 'all var(--transition-fast)', opacity: isPipelineBusy ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                              style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-sm)', cursor: isPipelineBusy ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: 700, transition: 'all 0.2s', opacity: isPipelineBusy ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'inset 0 0 10px rgba(239, 68, 68, 0.1)' }}
+                              onMouseEnter={e => { if(!isPipelineBusy) { e.currentTarget.style.background = '#ef4444'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.boxShadow = '0 0 20px rgba(239, 68, 68, 0.5)'; e.currentTarget.style.transform = 'scale(0.98)'; } }}
+                              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.boxShadow = 'inset 0 0 10px rgba(239, 68, 68, 0.1)'; e.currentTarget.style.transform = 'scale(1)'; }}
                             >
-                              <Trash2 size={14} strokeWidth={1.5} /> Terminate Architecture
+                              <Trash2 size={14} strokeWidth={2} /> Terminate Architecture
                             </button>
                           )}
                         </div>
@@ -407,8 +412,8 @@ export default function Dashboard() {
                 />
               </div>
               
-              <button type="submit" disabled={iamStatus === 'saving'} style={{ background: 'var(--zg-purple-core)', color: 'var(--text-pure)', padding: '1rem 2rem', borderRadius: 'var(--radius-sm)', width: 'fit-content', fontSize: '1rem', fontWeight: 700, border: 'none', cursor: iamStatus === 'saving' ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', opacity: iamStatus === 'saving' ? 0.7 : 1 }}>
-                {iamStatus === 'saving' ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Establishing Trust Link...</> : <><Shield size={18} strokeWidth={1.5} /> Secure Integration</>}
+              <button type="submit" disabled={iamStatus === 'saving'} style={{ background: 'rgba(168, 85, 247, 0.1)', color: 'var(--zg-purple-core)', padding: '1rem 2rem', borderRadius: 'var(--radius-sm)', width: 'fit-content', fontSize: '1rem', fontWeight: 700, border: '1px solid var(--zg-purple-border)', cursor: iamStatus === 'saving' ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', opacity: iamStatus === 'saving' ? 0.7 : 1, transition: 'all 0.2s', boxShadow: 'inset 0 0 15px rgba(168, 85, 247, 0.1)' }} onMouseEnter={e => { if(iamStatus !== 'saving') { e.currentTarget.style.background = 'var(--zg-purple-core)'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.boxShadow = '0 0 30px rgba(168, 85, 247, 0.6)'; e.currentTarget.style.transform = 'scale(0.98)'; } }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(168, 85, 247, 0.1)'; e.currentTarget.style.color = 'var(--zg-purple-core)'; e.currentTarget.style.boxShadow = 'inset 0 0 15px rgba(168, 85, 247, 0.1)'; e.currentTarget.style.transform = 'scale(1)'; }}>
+                {iamStatus === 'saving' ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Establishing Trust Link...</> : <><Shield size={18} strokeWidth={2} /> Secure Integration</>}
               </button>
             </motion.form>
 

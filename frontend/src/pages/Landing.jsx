@@ -29,33 +29,8 @@ export default function Landing() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
       
-      {/* 🌌 Dynamic Bleeding Edge Background */}
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        {/* Animated Grid */}
-        <div style={{ 
-          position: 'absolute', inset: 0, 
-          backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)', 
-          backgroundSize: '40px 40px', 
-          perspective: '1000px', 
-          transformOrigin: 'top',
-          maskImage: 'linear-gradient(to bottom, black 0%, transparent 80%)' 
-        }} />
-        
-        {/* Massive Ambient Orbs */}
-        <motion.div 
-          animate={{ x: [-50, 50, -50], y: [-20, 30, -20] }} 
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          style={{ position: 'absolute', top: '-10%', left: '-10%', width: '50vw', height: '50vw', background: 'radial-gradient(circle, var(--zg-purple-glow) 0%, transparent 60%)', filter: 'blur(100px)', opacity: 0.6 }} 
-        />
-        <motion.div 
-          animate={{ x: [50, -50, 50], y: [20, -30, 20] }} 
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          style={{ position: 'absolute', top: '40%', right: '-20%', width: '60vw', height: '60vw', background: 'radial-gradient(circle, var(--vz-gold-glow) 0%, transparent 60%)', filter: 'blur(120px)', opacity: 0.4 }} 
-        />
-      </div>
-
       {/* Navbar */}
-      <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={springPage} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1400px', width: '100%', margin: '0 auto', padding: '1.5rem 2rem', zIndex: 10, backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+      <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={springPage} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1400px', width: '100%', margin: '0 auto', padding: '1.5rem 2rem', zIndex: 10, backdropFilter: 'blur(12px)', borderBottom: 'var(--border-subtle)' }}>
         <div className="flex-center" style={{ gap: '0.75rem' }}>
           <div style={{ position: 'relative' }}>
             <Hexagon size={32} strokeWidth={1.5} style={{ color: 'var(--text-pure)' }} />
@@ -70,7 +45,7 @@ export default function Landing() {
             <svg style={{ width: '22px', height: '22px', fill: 'currentColor' }} viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
           </a>
           <div style={{ width: '1px', height: '24px', background: 'var(--border-subtle)' }} />
-          <Link to="/login" className="glass-panel" style={{ display: 'flex', alignItems: 'center', padding: '0.6rem 1.5rem', borderRadius: 'var(--radius-pill)', gap: '0.5rem', color: 'var(--bg-void)', background: 'var(--text-pure)', fontSize: '0.95rem', fontWeight: 700, textDecoration: 'none', transition: 'all 0.2s', border: 'none' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(255,255,255,0.1)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
+          <Link to="/login" className="glass-panel" style={{ display: 'flex', alignItems: 'center', padding: '0.6rem 1.5rem', borderRadius: 'var(--radius-pill)', gap: '0.5rem', color: 'var(--text-pure)', background: 'var(--bg-layer-2)', fontSize: '0.95rem', fontWeight: 700, textDecoration: 'none', transition: 'all 0.2s', border: '1px solid rgba(255,255,255,0.1)' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(255,255,255,0.1)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
             Access Console <ArrowRight size={16} strokeWidth={2} />
           </Link>
         </nav>
@@ -82,7 +57,7 @@ export default function Landing() {
 
 
         <motion.div variants={itemVariants} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1.25rem', borderRadius: 'var(--radius-pill)', border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'var(--bg-layer-2)', marginBottom: '2.5rem', backdropFilter: 'blur(10px)' }}>
-          <span style={{ display: 'flex', height: '8px', width: '8px', borderRadius: '50%', backgroundColor: '#10b981', boxShadow: '0 0 12px #10b981' }} />
+          <span className="status-pulse" style={{ display: 'flex', height: '8px', width: '8px', borderRadius: '50%', backgroundColor: 'var(--sys-success)', boxShadow: '0 0 12px var(--sys-success)' }} />
           <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-pure)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Velzion Platform v2.0 is Live</span>
         </motion.div>
 
@@ -98,10 +73,10 @@ export default function Landing() {
 
         {/* Action Buttons */}
         <motion.div variants={itemVariants} style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '6rem' }}>
-          <Link to="/zegion" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem 2rem', borderRadius: 'var(--radius-sm)', background: 'var(--zg-purple-glow)', color: 'var(--zg-purple-core)', fontWeight: 800, fontSize: '1.1rem', textDecoration: 'none', border: '1px solid var(--zg-purple-border)', transition: 'all 0.2s', backdropFilter: 'blur(10px)' }} onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(157, 78, 221, 0.2)'; e.currentTarget.style.transform = 'translateY(-2px)'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--zg-purple-glow)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+          <Link to="/zegion" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem 2rem', borderRadius: 'var(--radius-sm)', background: 'rgba(168, 85, 247, 0.1)', color: 'var(--zg-purple-core)', fontWeight: 800, fontSize: '1.1rem', textDecoration: 'none', border: '1px solid var(--zg-purple-border)', transition: 'all 0.2s', backdropFilter: 'blur(10px)', boxShadow: 'inset 0 0 15px rgba(168, 85, 247, 0.1)' }} onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(168, 85, 247, 0.2)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(168, 85, 247, 0.3)'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(168, 85, 247, 0.1)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'inset 0 0 15px rgba(168, 85, 247, 0.1)'; }}>
             <Zap size={20} strokeWidth={2.5} /> Explore Zegion
           </Link>
-          <Link to="/velzard" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem 2rem', borderRadius: 'var(--radius-sm)', background: 'var(--vz-gold-glow)', color: 'var(--vz-gold-core)', fontWeight: 800, fontSize: '1.1rem', textDecoration: 'none', border: '1px solid var(--vz-gold-border)', transition: 'all 0.2s', backdropFilter: 'blur(10px)' }} onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(245, 203, 92, 0.2)'; e.currentTarget.style.transform = 'translateY(-2px)'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--vz-gold-glow)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+          <Link to="/velzard" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem 2rem', borderRadius: 'var(--radius-sm)', background: 'rgba(251, 191, 36, 0.1)', color: 'var(--vz-gold-core)', fontWeight: 800, fontSize: '1.1rem', textDecoration: 'none', border: '1px solid var(--vz-gold-border)', transition: 'all 0.2s', backdropFilter: 'blur(10px)', boxShadow: 'inset 0 0 15px rgba(251, 191, 36, 0.1)' }} onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(251, 191, 36, 0.2)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(251, 191, 36, 0.3)'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(251, 191, 36, 0.1)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'inset 0 0 15px rgba(251, 191, 36, 0.1)'; }}>
             <Server size={20} strokeWidth={2.5} /> Explore Velzard
           </Link>
         </motion.div>

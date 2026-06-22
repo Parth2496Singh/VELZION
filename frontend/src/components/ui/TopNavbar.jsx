@@ -79,13 +79,14 @@ export default function TopNavbar() {
     : 'Overview';
 
   return (
-    <header style={{
+    <header className="glass-panel spotlight-card" style={{
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '1rem 2rem',
-      borderBottom: 'var(--border-subtle)',
-      backgroundColor: 'transparent',
+      borderRadius: 'var(--radius-lg)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      margin: '1rem 1rem 0 0',
       zIndex: 40
     }}>
       
@@ -123,10 +124,11 @@ export default function TopNavbar() {
           alignItems: 'center',
           width: isSearchFocused ? '280px' : '220px',
           height: '40px',
-          backgroundColor: isSearchFocused ? 'var(--bg-glass-hover)' : 'var(--bg-glass)',
-          border: isSearchFocused ? 'var(--border-focus)' : 'var(--border-subtle)',
+          backgroundColor: 'var(--bg-layer-2)',
+          border: isSearchFocused ? '1px solid rgba(255, 255, 255, 0.4)' : 'var(--border-subtle)',
           borderRadius: 'var(--radius-pill)',
           padding: '0 1rem',
+          boxShadow: isSearchFocused ? '0 0 15px rgba(255, 255, 255, 0.1)' : 'none',
           transition: 'all var(--transition-smooth)'
         }}>
           <Search size={16} style={{ 

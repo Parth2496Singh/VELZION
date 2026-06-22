@@ -248,9 +248,11 @@ routes:
           </div>
           <button 
             onClick={() => { setIsModalOpen(true); setStep(1); }}
-            style={{ background: 'linear-gradient(135deg, var(--vz-gold-core), #b45309)', color: '#000', border: 'none', padding: '0.85rem 1.5rem', borderRadius: 'var(--radius-sm)', fontWeight: 800, cursor: 'pointer', transition: 'all var(--transition-fast)', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 0 20px rgba(245, 203, 92, 0.3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+            style={{ background: 'rgba(251, 191, 36, 0.1)', color: 'var(--vz-gold-core)', border: '1px solid var(--vz-gold-border)', padding: '0.85rem 1.5rem', borderRadius: 'var(--radius-sm)', fontWeight: 800, cursor: 'pointer', transition: 'all var(--transition-fast)', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 0 20px rgba(245, 203, 92, 0.3), inset 0 0 10px rgba(251, 191, 36, 0.1)', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--vz-gold-core)'; e.currentTarget.style.color = '#000'; e.currentTarget.style.boxShadow = '0 0 30px rgba(251, 191, 36, 0.6)'; e.currentTarget.style.transform = 'scale(0.98)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(251, 191, 36, 0.1)'; e.currentTarget.style.color = 'var(--vz-gold-core)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(245, 203, 92, 0.3), inset 0 0 10px rgba(251, 191, 36, 0.1)'; e.currentTarget.style.transform = 'scale(1)'; }}
           >
-            <Zap size={16} fill="#000" strokeWidth={1.5} /> Ignite Cluster
+            <Zap size={16} strokeWidth={2} /> Ignite Cluster
           </button>
         </div>
 
@@ -455,8 +457,8 @@ routes:
                     </div>
                   </div>
 
-                  <button style={{ width: '100%', justifyContent: 'center', padding: '1.25rem', background: 'linear-gradient(135deg, var(--vz-gold-core), #b45309)', color: '#000', border: 'none', borderRadius: 'var(--radius-sm)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: selectedRepo ? 'pointer' : 'not-allowed', opacity: selectedRepo ? 1 : 0.5 }} disabled={!selectedRepo} onClick={handleStartDeployment}>
-                    Generate Contract <ExternalLink size={18} strokeWidth={1.5} />
+                  <button style={{ width: '100%', justifyContent: 'center', padding: '1.25rem', background: 'rgba(251, 191, 36, 0.1)', color: 'var(--vz-gold-core)', border: '1px solid var(--vz-gold-border)', borderRadius: 'var(--radius-sm)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: selectedRepo ? 'pointer' : 'not-allowed', opacity: selectedRepo ? 1 : 0.5, boxShadow: 'inset 0 0 10px rgba(251, 191, 36, 0.1)', transition: 'all 0.2s' }} disabled={!selectedRepo} onClick={handleStartDeployment} onMouseEnter={e => { if(selectedRepo) { e.currentTarget.style.background = 'var(--vz-gold-core)'; e.currentTarget.style.color = '#000'; e.currentTarget.style.boxShadow = '0 0 30px rgba(251, 191, 36, 0.6)'; e.currentTarget.style.transform = 'scale(0.99)'; } }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(251, 191, 36, 0.1)'; e.currentTarget.style.color = 'var(--vz-gold-core)'; e.currentTarget.style.boxShadow = 'inset 0 0 10px rgba(251, 191, 36, 0.1)'; e.currentTarget.style.transform = 'scale(1)'; }}>
+                    Generate Contract <ExternalLink size={18} strokeWidth={2} />
                   </button>
                 </motion.div>
               )}
@@ -468,9 +470,9 @@ routes:
                     {yamlTemplate}
                   </div>
                   <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button style={{ background: 'transparent', border: '1px solid var(--border-subtle)', color: 'var(--text-pure)', padding: '1rem', borderRadius: 'var(--radius-sm)', flex: 1, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }} onClick={() => setStep(1)}>Go Back</button>
-                    <button onClick={handleCommitToGitHub} style={{ flex: 2, justifyContent: 'center', background: 'linear-gradient(135deg, var(--vz-gold-core), #b45309)', color: '#000', border: 'none', padding: '1rem', borderRadius: 'var(--radius-sm)', fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                      Commit via GitHub <ExternalLink size={16} strokeWidth={1.5} />
+                    <button style={{ background: 'transparent', border: '1px solid var(--border-subtle)', color: 'var(--text-pure)', padding: '1rem', borderRadius: 'var(--radius-sm)', flex: 1, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => setStep(1)} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-layer-2)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>Go Back</button>
+                    <button onClick={handleCommitToGitHub} style={{ flex: 2, justifyContent: 'center', background: 'rgba(251, 191, 36, 0.1)', color: 'var(--vz-gold-core)', border: '1px solid var(--vz-gold-border)', padding: '1rem', borderRadius: 'var(--radius-sm)', fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: 'inset 0 0 10px rgba(251, 191, 36, 0.1)' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--vz-gold-core)'; e.currentTarget.style.color = '#000'; e.currentTarget.style.boxShadow = '0 0 30px rgba(251, 191, 36, 0.6)'; e.currentTarget.style.transform = 'scale(0.99)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(251, 191, 36, 0.1)'; e.currentTarget.style.color = 'var(--vz-gold-core)'; e.currentTarget.style.boxShadow = 'inset 0 0 10px rgba(251, 191, 36, 0.1)'; e.currentTarget.style.transform = 'scale(1)'; }}>
+                      Commit via GitHub <ExternalLink size={16} strokeWidth={2} />
                     </button>
                   </div>
                 </motion.div>
@@ -478,24 +480,24 @@ routes:
 
               {step === 3 && (
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={springPage}>
-                  <div style={{ background: 'var(--bg-layer-2)', border: '1px dashed var(--vz-gold-core)', padding: '2.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center', marginBottom: '2.5rem' }}>
+                  <div style={{ background: 'var(--bg-layer-2)', border: '1px solid rgba(251, 191, 36, 0.2)', padding: '2.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center', marginBottom: '2.5rem', boxShadow: 'inset 0 0 20px rgba(251, 191, 36, 0.05)' }}>
                     <h3 style={{ color: 'var(--text-pure)', margin: '0 0 1rem 0', fontSize: '1.5rem' }}>Awaiting Uplink Verification</h3>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '2rem', lineHeight: 1.5 }}>Velzard will scan the <code>main</code> branch of your repository for the <code>velzion.yaml</code> file to lock the state.</p>
                     
                     {verificationStatus === 'idle' && (
-                      <button style={{ background: 'var(--vz-gold-glow)', border: '1px solid var(--vz-gold-core)', color: 'var(--vz-gold-core)', padding: '1rem 2rem', borderRadius: 'var(--radius-sm)', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }} onClick={handleVerifyContract}>Scan Remote Repository</button>
+                      <button style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid var(--vz-gold-core)', color: 'var(--vz-gold-core)', padding: '1rem 2rem', borderRadius: 'var(--radius-sm)', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 0 15px rgba(251, 191, 36, 0.2)' }} onClick={handleVerifyContract} onMouseEnter={e => e.currentTarget.style.background = 'rgba(251, 191, 36, 0.2)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(251, 191, 36, 0.1)'}>Scan Remote Repository</button>
                     )}
                     {verificationStatus === 'loading' && (
                       <button disabled style={{ background: 'transparent', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', padding: '1rem 2rem', borderRadius: 'var(--radius-sm)', fontWeight: 700, textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}><Loader2 size={16} style={{ animation: 'spin 2s linear infinite' }} /> Establishing GitHub Uplink...</button>
                     )}
                     {verificationStatus === 'success' && (
-                      <div style={{ color: 'var(--vz-gold-core)', display: 'inline-flex', alignItems: 'center', gap: '0.75rem', fontWeight: 800, fontSize: '1rem', background: 'var(--vz-gold-glow)', padding: '1rem 2rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--vz-gold-core)', textTransform: 'uppercase' }}>
-                        <CheckCircle2 size={20} strokeWidth={1.5} /> Contract Secured
+                      <div style={{ color: 'var(--sys-success)', display: 'inline-flex', alignItems: 'center', gap: '0.75rem', fontWeight: 800, fontSize: '1rem', background: 'rgba(34, 197, 94, 0.1)', padding: '1rem 2rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--sys-success)', textTransform: 'uppercase', boxShadow: '0 0 20px rgba(34, 197, 94, 0.2)' }}>
+                        <CheckCircle2 size={20} strokeWidth={2} /> Contract Secured
                       </div>
                     )}
                   </div>
-                  <button style={{ width: '100%', justifyContent: 'center', padding: '1.5rem', fontSize: '1.25rem', background: 'linear-gradient(135deg, var(--vz-gold-core), #b45309)', color: '#000', border: 'none', borderRadius: 'var(--radius-sm)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: verificationStatus !== 'success' || launchStatus === 'loading' ? 'not-allowed' : 'pointer', opacity: verificationStatus !== 'success' || launchStatus === 'loading' ? 0.5 : 1 }} disabled={verificationStatus !== 'success' || launchStatus === 'loading'} onClick={handleLaunchProduction}>
-                    {launchStatus === 'loading' ? <><Loader2 size={24} style={{ animation: 'spin 2s linear infinite' }} /> Executing Storm Core...</> : <><Zap size={24} fill="#000" strokeWidth={1.5} /> IGNITE CLUSTER</>}
+                  <button style={{ width: '100%', justifyContent: 'center', padding: '1.5rem', fontSize: '1.25rem', background: 'rgba(251, 191, 36, 0.15)', color: 'var(--vz-gold-core)', border: '1px solid var(--vz-gold-border)', borderRadius: 'var(--radius-sm)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: verificationStatus !== 'success' || launchStatus === 'loading' ? 'not-allowed' : 'pointer', opacity: verificationStatus !== 'success' || launchStatus === 'loading' ? 0.5 : 1, transition: 'all 0.2s', boxShadow: 'inset 0 0 20px rgba(251, 191, 36, 0.15), 0 0 20px rgba(251, 191, 36, 0.2)' }} disabled={verificationStatus !== 'success' || launchStatus === 'loading'} onClick={handleLaunchProduction} onMouseEnter={e => { if(verificationStatus === 'success' && launchStatus !== 'loading') { e.currentTarget.style.background = 'var(--vz-gold-core)'; e.currentTarget.style.color = '#000'; e.currentTarget.style.boxShadow = '0 0 40px rgba(251, 191, 36, 0.8)'; e.currentTarget.style.transform = 'scale(0.99)'; } }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(251, 191, 36, 0.15)'; e.currentTarget.style.color = 'var(--vz-gold-core)'; e.currentTarget.style.boxShadow = 'inset 0 0 20px rgba(251, 191, 36, 0.15), 0 0 20px rgba(251, 191, 36, 0.2)'; e.currentTarget.style.transform = 'scale(1)'; }}>
+                    {launchStatus === 'loading' ? <><Loader2 size={24} style={{ animation: 'spin 2s linear infinite' }} /> Executing Storm Core...</> : <><Zap size={24} strokeWidth={2} /> IGNITE CLUSTER</>}
                   </button>
                 </motion.div>
               )}
