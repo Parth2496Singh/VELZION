@@ -79,10 +79,11 @@ Velzion integrates a diverse set of modern tooling to synthesize application orc
 * **CI/CD Pipeline:** Jenkins (CI), ArgoCD (GitOps CD), Helm
 * **Security & Observability:** Trivy (Vulnerability Scanning), SonarQube (Static Analysis), AWS CloudWatch
 
-### The 1-Click Trust Model (Security)
+### The 1-Click Trust Model (Security Upgrade)
 Velzion **never asks users to input raw AWS Access Keys**. 
-For deployment access, the React frontend redirects users to launch a pre-configured CloudFormation stack in their AWS console (with the required IAM policies securely hosted in an S3 bucket). This stack creates an IAM Role that explicitly trusts the central Velzion AWS account. When n8n executes Terraform, it calls AWS STS to assume the role, generating short-lived cryptographic tokens valid only for the deployment duration.
+Instead, we implemented an **Enterprise IAM Role Binding architecture**. The React frontend directs users to launch a pre-configured CloudFormation stack in their AWS console. This stack creates an IAM Role that explicitly trusts the Velzion backend. When you link this role via the UI, it is securely vaulted in your PostgreSQL `UserProfile`.
 
+When n8n executes Terraform, the Django backend dynamically calls `boto3.client('sts').assume_role`, generates short-lived cryptographic tokens, and injects them directly into the n8n execution environment valid only for the deployment duration.
 
 ## 🏛️ System Architecture
 
@@ -94,8 +95,8 @@ graph TD
         Django -->|Trigger Deploy/Destroy| n8n[n8n Workflow Automation]
         Django ---|State/Telemetry| DB[(PostgreSQL Database)]
         
-        n8n -->|Generate IaC| TF[Terraform Engine]
-        TF -.->|Assumes IAM Role| AWS[AWS Cloud]
+        n8n -->|Generate IaC & Inject STS| TF[Terraform Engine]
+        TF -.->|Assumes Temp IAM Role| AWS[AWS Cloud]
     end
 
     subgraph AWS_Cloud [User AWS Account]
@@ -105,6 +106,31 @@ graph TD
         Nginx -->|Routes Traffic| AppContainer[Deployed Docker App]
     end
 ```
+
+---
+
+## 🚀 Beginner Setup Guide: n8n Workflow Orchestration
+
+To run Velzion, you must import the core orchestration workflow into your n8n instance.
+
+### Step 1: Access n8n
+1. After running `docker compose up -d`, navigate to your n8n dashboard: `http://<your-ec2-ip>:5678`.
+2. Create an initial owner account (if this is your first time booting).
+
+### Step 2: Import the Velzard Workflow
+1. In the n8n left sidebar, click **Workflows** -> **Add Workflow**.
+2. In the top right corner, click the **Options (three dots) menu**.
+3. Select **Import from File...**
+4. Choose the `VELZARD-WORKFLOW.json` file located in the `workflows/` directory of this repository.
+
+### Step 3: Activate the Webhook
+1. Once imported, you will see the full automation graph.
+2. At the top right of the screen, toggle the workflow from **Inactive** to **Active**.
+3. *Critical:* Make sure you save the workflow!
+
+Now, whenever you click "Ignite Cluster" in the Velzion UI, the Django backend will securely pass the IAM credentials and infrastructure payload directly to this workflow!
+
+---
 
 ### Backend Structure & Modular Boundaries
 Velzion enforces strict domain boundaries using a **Modular Monolith** architecture built on Django, exposing strict RESTful endpoints.

@@ -8,6 +8,9 @@ class UserProfile(AbstractUser):
     
     #NEW: The secure vault for this specific user's authorized workspaces
     allowed_repos = models.JSONField(default=list, blank=True)
+    
+    # AWS IAM integration
+    aws_iam_role_arn = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return self.username

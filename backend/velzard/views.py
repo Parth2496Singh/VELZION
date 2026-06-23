@@ -56,6 +56,25 @@ class ProductionDeploymentViewSet(viewsets.ModelViewSet):
         else:
             return Response({"error": "velzion.yaml not found in the repository root.", "verified": False}, status=404)
 
+import boto3
+def get_temp_aws_credentials(user):
+    if not user.aws_iam_role_arn:
+        return {}
+    try:
+        sts_client = boto3.client('sts')
+        assumed_role = sts_client.assume_role(
+            RoleArn=user.aws_iam_role_arn,
+            RoleSessionName=f"VelzionSession-{user.username}"
+        )
+        return {
+            "aws_access_key_id": assumed_role['Credentials']['AccessKeyId'],
+            "aws_secret_access_key": assumed_role['Credentials']['SecretAccessKey'],
+            "aws_session_token": assumed_role['Credentials']['SessionToken']
+        }
+    except Exception as e:
+        print(f"Failed to assume role: {e}")
+        return {}
+
     @action(detail=True, methods=['post'])
     def trigger_deploy(self, request, pk=None):
         deployment = self.get_object()
@@ -74,7 +93,10 @@ class ProductionDeploymentViewSet(viewsets.ModelViewSet):
             "branch": deployment.branch,
             "instance_type": deployment.instance_type,
             "volume_size": deployment.volume_size,
+            "backend_url": os.environ.get('VELZION_PUBLIC_URL', request.build_absolute_uri('/')[:-1])
         }
+        
+        payload.update(get_temp_aws_credentials(request.user))
         
         try:
             requests.post(n8n_url, json=payload, timeout=5)
@@ -101,7 +123,10 @@ class ProductionDeploymentViewSet(viewsets.ModelViewSet):
             "branch": deployment.branch,
             "instance_type": deployment.instance_type,
             "volume_size": deployment.volume_size,
+            "backend_url": os.environ.get('VELZION_PUBLIC_URL', request.build_absolute_uri('/')[:-1])
         }
+        
+        payload.update(get_temp_aws_credentials(request.user))
         
         try:
             requests.post(n8n_url, json=payload, timeout=5)

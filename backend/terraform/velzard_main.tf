@@ -26,6 +26,11 @@ variable "volume_size" {
   default     = 30
 }
 
+variable "backend_url" {
+  description = "The public URL of the Velzion backend server"
+  type        = string
+}
+
 provider "aws" {
   region = "us-east-1"
 }
@@ -207,7 +212,7 @@ processors:
 
 exporters:
   otlphttp:
-    metrics_endpoint: "http://54.86.145.100/api/velzard/deployments/${var.deployment_id}/telemetry/"
+    metrics_endpoint: "${var.backend_url}/api/velzard/deployments/${var.deployment_id}/telemetry/"
     encoding: json
     compression: none
     headers:
@@ -223,7 +228,7 @@ service:
       exporters: [otlphttp, debug]
 OTEL_EOF
 
-curl -X PATCH http://54.86.145.100/api/velzard/deployments/${var.deployment_id}/webhook_update/ \
+curl -X PATCH ${var.backend_url}/api/velzard/deployments/${var.deployment_id}/webhook_update/ \
   -H "x-velzion-secret: L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA" \
   -H "Content-Type: application/json" \
   -d '{"status": "COMPILING"}'
@@ -233,7 +238,7 @@ python3 /opt/velzard/velzard_engine.py
 if [ $? -eq 0 ]; then
   docker compose up -d --build
   
-  curl -X PATCH http://54.86.145.100/api/velzard/deployments/${var.deployment_id}/webhook_update/ \
+  curl -X PATCH ${var.backend_url}/api/velzard/deployments/${var.deployment_id}/webhook_update/ \
     -H "x-velzion-secret: L0JFLBRiyyWiCatJeju2IHXOm-yQUFuhSzjflv8q_a8SgeDP9SoKNeRmyE_xyCre5lZ0TpREAdxbK37q84IjfA" \
     -H "Content-Type: application/json" \
     -d '{"status": "RUNNING"}'

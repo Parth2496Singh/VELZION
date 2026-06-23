@@ -100,3 +100,16 @@ class LogoutView(APIView):
         response.delete_cookie('csrftoken')
         response.delete_cookie('sessionid')
         return response
+
+from rest_framework.permissions import IsAuthenticated
+class BindIAMRoleView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        role_arn = request.data.get('arn')
+        if not role_arn:
+            return Response({"error": "ARN is required"}, status=400)
+            
+        request.user.aws_iam_role_arn = role_arn
+        request.user.save()
+        return Response({"message": "IAM Role bound to workspace successfully."})

@@ -10,6 +10,7 @@ import {
   Hexagon, 
   ArrowLeft 
 } from 'lucide-react';
+import axios from 'axios';
 
 export default function IamLogin() {
   const navigate = useNavigate();
@@ -29,16 +30,11 @@ export default function IamLogin() {
     setIamStatus('saving');
 
     try {
-      // TODO: Inject your actual Axios backend call here.
-      // await axios.post('/api/iam/bind', { arn: iamRoleArn });
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/users/bind_iam/`, { arn: iamRoleArn }, { withCredentials: true });
       
-      // Simulating network latency for the UI
-      setTimeout(() => {
-        localStorage.setItem('velzion_iam_connected', 'true');
-        setIamStatus('success');
-        // Dispatch an event so other components (like TopNavbar) can update immediately
-        window.dispatchEvent(new Event('storage'));
-      }, 1500);
+      localStorage.setItem('velzion_iam_connected', 'true');
+      setIamStatus('success');
+      window.dispatchEvent(new Event('storage'));
     } catch (error) {
       console.error("Binding failed", error);
       setIamStatus('error');
