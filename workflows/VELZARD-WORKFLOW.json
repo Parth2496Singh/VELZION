@@ -70,7 +70,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"aws_instance_id\": \"{{ JSON.parse($('Deploy Velzard EC2').first().json.stdout).instance_id.value }}\",\n  \"elastic_ip\": \"{{ JSON.parse($('Deploy Velzard EC2').first().json.stdout).public_ip.value }}\"\n}",
+        "jsonBody": "={\n  \"status\": \"RUNNING\",\n  \"aws_instance_id\": \"{{ JSON.parse($('Deploy Velzard EC2').first().json.stdout).instance_id.value }}\",\n  \"elastic_ip\": \"{{ JSON.parse($('Deploy Velzard EC2').first().json.stdout).public_ip.value }}\"\n}",
         "options": {}
       },
       "id": "1ecee330-9510-40cd-9d65-04956ee07de4",
