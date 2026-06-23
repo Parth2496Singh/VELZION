@@ -44,14 +44,15 @@ allowed_hosts_env = os.environ.get('DJANGO_ALLOWED_HOSTS', '*')
 ALLOWED_HOSTS = ['*'] # Simplify BYOC deployment
 
 # 4. CORS ORIGINS (For the React Frontend)
-# Converts the comma-separated .env string into a Python list
-cors_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173')
-CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_env.split(',')]
-CORS_ALLOW_ALL_ORIGINS = False
+# Allow all origins for the BYOC deployment model so users don't get blocked by changing EC2 IPs
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 # 5. CSRF TRUSTED ORIGINS (Crucial for cross-origin POST requests)
-CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in cors_origins_env.split(',')]
+CSRF_TRUSTED_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173']
+# Optionally add from env
+if 'CORS_ALLOWED_ORIGINS' in os.environ:
+    CSRF_TRUSTED_ORIGINS.extend([origin.strip() for origin in os.environ['CORS_ALLOWED_ORIGINS'].split(',')])
 
 # (Keep your GitHub Client IDs below this as they were)
 GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID')
