@@ -30,7 +30,7 @@ export default function IamLogin() {
     setIamStatus('saving');
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/users/bind_iam/`, { arn: iamRoleArn }, { withCredentials: true });
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/bind_iam/`, { arn: iamRoleArn }, { withCredentials: true });
       
       localStorage.setItem('velzion_iam_connected', 'true');
       setIamStatus('success');
