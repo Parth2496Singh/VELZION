@@ -127,6 +127,12 @@ class ProductionDeploymentViewSet(viewsets.ModelViewSet):
             deployment.delete()
             return Response({"message": "Deployment record wiped from matrix."}, status=200)
 
+        aws_instance_id = request.data.get('aws_instance_id')
+        elastic_ip = request.data.get('elastic_ip')
+
+        if not new_status and aws_instance_id and elastic_ip:
+            new_status = 'RUNNING'
+
         if new_status == 'RUNNING' and deployment.status != 'RUNNING':
             deployment.ascended_at = timezone.now()
 

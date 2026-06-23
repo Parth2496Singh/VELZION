@@ -278,7 +278,7 @@ routes:
                   </td>
                 </motion.tr>
               ) : (
-                sortedDeployments.map(dep => {
+                sortedDeployments.map((dep, index) => {
                   const isExpanded = expandedRowId === dep.id;
                   const isTerminated = ['OFFLINE', 'DESTROYED', 'DESTROYING', 'FAILED'].includes(dep.status);
                   
@@ -287,6 +287,7 @@ routes:
                       <motion.tr variants={itemVariants} style={{ cursor: 'pointer', background: isExpanded ? 'var(--vz-gold-glow)' : 'transparent', transition: 'background var(--transition-fast)', borderBottom: isExpanded ? 'none' : '1px solid var(--border-subtle)' }} onClick={() => toggleRowExpansion(dep.id)}>
                         <td style={{ padding: '1.5rem', fontWeight: 700, color: 'var(--text-pure)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                           <ChevronDown size={18} strokeWidth={1.5} style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(-90deg)', transition: 'transform 0.3s', color: 'var(--vz-gold-core)' }} />
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{index + 1}.</span>
                           {dep.github_repo_url.replace('https://github.com/', '')}
                         </td>
                         <td style={{ padding: '1.5rem' }}>
