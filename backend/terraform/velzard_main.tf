@@ -110,50 +110,76 @@ def generate_velzard_deployment():
     if not os.path.exists("velzion.yaml"): sys.exit(1)
     with open("velzion.yaml", 'r') as f: config = yaml.safe_load(f)
     
-    services = config.get("services", {})
-    database_config = config.get("database", {})
+    compose_file = config.get("compose_file")
     routes = config.get("routes", {})
-    has_database = bool(database_config)
     
-    compose = {"version": "3.8", "services": {}, "networks": {"velzion-network": {"driver": "bridge"}}, "volumes": {}}
-    
-    db_env_injection = ""
-    if has_database:
-        db_engine = database_config.get("engine", "postgres:16-alpine").lower()
-        db_service = {"image": db_engine, "networks": ["velzion-network"], "restart": "always"}
+    if compose_file:
+        # Enterprise Mode: Bring Your Own Compose
+        if not os.path.exists(compose_file): sys.exit(1)
+        with open(compose_file, 'r') as f: compose = yaml.safe_load(f)
         
-        if "postgres" in db_engine:
-            db_service.update({"environment": ["POSTGRES_USER=velzion_prod", "POSTGRES_PASSWORD=secure_prod_123", "POSTGRES_DB=velzion_db"], "volumes": ["db_data:/var/lib/postgresql/data"]})
-            db_env_injection = "DATABASE_URL=postgres://velzion_prod:secure_prod_123@database:5432/velzion_db"
-        elif "mongo" in db_engine:
-            db_service.update({"environment": ["MONGO_INITDB_ROOT_USERNAME=velzion_admin", "MONGO_INITDB_ROOT_PASSWORD=secure_prod_123", "MONGO_INITDB_DATABASE=velzion_db"], "volumes": ["db_data:/data/db"]})
-            db_env_injection = "MONGO_URI=mongodb://velzion_admin:secure_prod_123@database:27017/velzion_db?authSource=admin"
-        elif "mysql" in db_engine:
-            db_service.update({"environment": ["MYSQL_ROOT_PASSWORD=secure_prod_123", "MYSQL_DATABASE=velzion_db"], "volumes": ["db_data:/var/lib/mysql"]})
-            db_env_injection = "MYSQL_URL=mysql://root:secure_prod_123@database:3306/velzion_db"
-        elif "redis" in db_engine:
-            db_env_injection = "REDIS_URL=redis://database:6379"
+        if "networks" not in compose: compose["networks"] = {}
+        compose["networks"]["velzion-network"] = {"driver": "bridge"}
+        
+        services = compose.get("services", {})
+        for s_name, s_data in services.items():
+            if "networks" not in s_data: s_data["networks"] = []
+            if isinstance(s_data["networks"], list):
+                if "velzion-network" not in s_data["networks"]: s_data["networks"].append("velzion-network")
+            elif isinstance(s_data["networks"], dict):
+                s_data["networks"]["velzion-network"] = {}
+    else:
+        # Standard Mode: Child's Play Contract
+        services = config.get("services", {})
+        database_config = config.get("database", {})
+        has_database = bool(database_config)
+        
+        compose = {"version": "3.8", "services": {}, "networks": {"velzion-network": {"driver": "bridge"}}, "volumes": {}}
+        
+        db_env_injection = ""
+        if has_database:
+            db_engine = database_config.get("engine", "postgres:16-alpine").lower()
+            db_service = {"image": db_engine, "networks": ["velzion-network"], "restart": "always"}
+            
+            if "postgres" in db_engine:
+                db_service.update({"environment": ["POSTGRES_USER=velzion_prod", "POSTGRES_PASSWORD=secure_prod_123", "POSTGRES_DB=velzion_db"], "volumes": ["db_data:/var/lib/postgresql/data"]})
+                db_env_injection = "DATABASE_URL=postgres://velzion_prod:secure_prod_123@database:5432/velzion_db"
+            elif "mongo" in db_engine:
+                db_service.update({"environment": ["MONGO_INITDB_ROOT_USERNAME=velzion_admin", "MONGO_INITDB_ROOT_PASSWORD=secure_prod_123", "MONGO_INITDB_DATABASE=velzion_db"], "volumes": ["db_data:/data/db"]})
+                db_env_injection = "MONGO_URI=mongodb://velzion_admin:secure_prod_123@database:27017/velzion_db?authSource=admin"
+            elif "mysql" in db_engine:
+                db_service.update({"environment": ["MYSQL_ROOT_PASSWORD=secure_prod_123", "MYSQL_DATABASE=velzion_db"], "volumes": ["db_data:/var/lib/mysql"]})
+                db_env_injection = "MYSQL_URL=mysql://root:secure_prod_123@database:3306/velzion_db"
+            elif "redis" in db_engine:
+                db_env_injection = "REDIS_URL=redis://database:6379"
 
-        compose["services"]["database"] = db_service
-        compose["volumes"]["db_data"] = {}
-    
-    for s_name, s_data in services.items():
-        b_path = s_data.get("path", ".")
-        if not os.path.exists(os.path.join(b_path, "Dockerfile")): sys.exit(1)
+            compose["services"]["database"] = db_service
+            compose["volumes"]["db_data"] = {}
         
-        s_entry = {
-            "build": {"context": b_path}, 
-            "networks": ["velzion-network"], 
-            "expose": [str(s_data.get("port", 80))], 
-            "environment": s_data.get("env", [])
-        }
-        
-        if "needs" in s_data and "database" in s_data["needs"] and has_database:
-            s_entry["depends_on"] = ["database"]
-            if db_env_injection:
-                s_entry["environment"].append(db_env_injection)
-                
-        compose["services"][s_name] = s_entry
+        for s_name, s_data in services.items():
+            b_path = s_data.get("path", ".")
+            if not os.path.exists(os.path.join(b_path, "Dockerfile")): sys.exit(1)
+            
+            s_entry = {
+                "build": {"context": b_path}, 
+                "networks": ["velzion-network"], 
+                "expose": [str(s_data.get("port", 80))], 
+                "environment": s_data.get("env", []),
+                "restart": s_data.get("restart", "unless-stopped")
+            }
+            
+            reserved_keys = ["path", "port", "env", "needs", "restart"]
+            for key, value in s_data.items():
+                if key not in reserved_keys:
+                    s_entry[key] = value
+            
+            if "needs" in s_data and "database" in s_data["needs"] and has_database:
+                if "depends_on" not in s_entry: s_entry["depends_on"] = []
+                if isinstance(s_entry["depends_on"], list): s_entry["depends_on"].append("database")
+                elif isinstance(s_entry["depends_on"], dict): s_entry["depends_on"]["database"] = {"condition": "service_started"}
+                if db_env_injection: s_entry["environment"].append(db_env_injection)
+                    
+            compose["services"][s_name] = s_entry
         
     compose["services"]["gateway"] = {
         "image": "nginx:alpine", 

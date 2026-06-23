@@ -81,6 +81,7 @@ export default function Production() {
   const [launchStatus, setLaunchStatus] = useState('idle');
   const [instanceType, setInstanceType] = useState('t3.small');
   const [volumeSize, setVolumeSize] = useState(30);
+  const [hasDockerCompose, setHasDockerCompose] = useState(false);
 
   // --- TELEMETRY & CINEMATIC STATE ---
   const [expandedRowId, setExpandedRowId] = useState(null);
@@ -89,31 +90,63 @@ export default function Production() {
 
   const { metrics } = useTelemetry();
 
-  const yamlTemplate = `version: 1.0
+  const yamlTemplate = hasDockerCompose ? `version: 2.0
+# 🚀 Enterprise Mode: Velzion will use your existing Docker Compose!
+compose_file: ./docker-compose.yml
+
+# Just tell Velzion which of your internal services should face the public internet.
+routes:
+  /: frontend              # Maps domain.com/ to your 'frontend' service
+  /api: delivery-service   # Maps domain.com/api to your 'delivery-service'
+` : `version: 2.0
 
 # ====================================================================
 # 🌩️ VELZION STORM CONTRACT
+# --------------------------------------------------------------------
+# Welcome to Velzion! This file tells the cloud how to build your app.
+# Just map your folders to ports, and we handle the rest.
 # ====================================================================
-services:
-  frontend:
-    path: ./frontend       
-    port: 80               
-    env:
-      - VITE_API_URL=/api
 
-  backend:
-    path: ./backend        
-    port: 5000             
-    needs: [database]      
+# --------------------------------------------------------------------
+# 1. CLOUD DATABASE (Optional)
+# Need a database? Just uncomment the engine you want.
+# Velzion will automatically provision it and inject the connection URL 
+# directly into your services as an environment variable!
+# --------------------------------------------------------------------
+database:
+  # Choose one: postgres:16-alpine, mongo:7, mysql:8, redis:7
+  engine: postgres:16-alpine
+
+# --------------------------------------------------------------------
+# 2. MICROSERVICES
+# List the folders containing your code. We will build them automatically.
+# --------------------------------------------------------------------
+services:
+  # --- Service 1: Your React/Vue UI ---
+  frontend:
+    path: ./web-ui           # Folder where your code lives
+    port: 3000               # Port your app listens on internally
+    env:
+      - NEXT_PUBLIC_API_URL=/api
+
+  # --- Service 2: Your Node/Python API ---
+  backend-api:
+    path: ./api-server
+    port: 8080
+    needs: [database]        # 👈 This tells Velzion to wait for the DB to boot!
     env:
       - NODE_ENV=production
+      # Velzion auto-injects 'DATABASE_URL' since you requested 'needs: [database]'
+      # But you can add your own custom secrets here too:
+      - STRIPE_SECRET_KEY=sk_live_12345
 
-database:
-  engine: mongo:latest
-
+# --------------------------------------------------------------------
+# 3. INTERNET ROUTING (API GATEWAY)
+# How should the outside world talk to your microservices?
+# --------------------------------------------------------------------
 routes:
-  /: frontend              
-  /api: backend            
+  /: frontend                # Send all normal traffic to the React UI
+  /api: backend-api          # Send anything starting with /api to the Node server
 `;
 
   useEffect(() => {
@@ -436,6 +469,16 @@ routes:
                         )}
                       </div>
                     )}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem', background: 'var(--bg-layer-2)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', marginBottom: '1.5rem', cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => setHasDockerCompose(!hasDockerCompose)}>
+                    <div>
+                      <div style={{ color: 'var(--text-pure)', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.25rem' }}>Enterprise Mode (BYOC)</div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>I already have a docker-compose.yml file in my repository.</div>
+                    </div>
+                    <div style={{ width: '40px', height: '20px', background: hasDockerCompose ? 'var(--vz-gold-core)' : 'rgba(255,255,255,0.1)', borderRadius: '20px', position: 'relative', transition: 'all 0.3s' }}>
+                      <div style={{ position: 'absolute', top: '2px', left: hasDockerCompose ? '22px' : '2px', width: '16px', height: '16px', background: hasDockerCompose ? '#000' : 'var(--text-muted)', borderRadius: '50%', transition: 'all 0.3s' }} />
+                    </div>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2.5rem' }}>
