@@ -8,9 +8,28 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny 
 import yaml
+import boto3
 
 from .models import ProductionDeployment
 from .serializers import ProductionDeploymentSerializer
+
+def get_temp_aws_credentials(user):
+    if not user.aws_iam_role_arn:
+        return {}
+    try:
+        sts_client = boto3.client('sts')
+        assumed_role = sts_client.assume_role(
+            RoleArn=user.aws_iam_role_arn,
+            RoleSessionName=f"VelzionSession-{user.username}"
+        )
+        return {
+            "aws_access_key_id": assumed_role['Credentials']['AccessKeyId'],
+            "aws_secret_access_key": assumed_role['Credentials']['SecretAccessKey'],
+            "aws_session_token": assumed_role['Credentials']['SessionToken']
+        }
+    except Exception as e:
+        print(f"Failed to assume role: {e}")
+        return {}
 
 class ProductionDeploymentViewSet(viewsets.ModelViewSet):
     serializer_class = ProductionDeploymentSerializer
@@ -55,25 +74,6 @@ class ProductionDeploymentViewSet(viewsets.ModelViewSet):
             return Response({"message": "Contract Verified! Ready for deployment.", "verified": True}, status=200)
         else:
             return Response({"error": "velzion.yaml not found in the repository root.", "verified": False}, status=404)
-
-import boto3
-def get_temp_aws_credentials(user):
-    if not user.aws_iam_role_arn:
-        return {}
-    try:
-        sts_client = boto3.client('sts')
-        assumed_role = sts_client.assume_role(
-            RoleArn=user.aws_iam_role_arn,
-            RoleSessionName=f"VelzionSession-{user.username}"
-        )
-        return {
-            "aws_access_key_id": assumed_role['Credentials']['AccessKeyId'],
-            "aws_secret_access_key": assumed_role['Credentials']['SecretAccessKey'],
-            "aws_session_token": assumed_role['Credentials']['SessionToken']
-        }
-    except Exception as e:
-        print(f"Failed to assume role: {e}")
-        return {}
 
     @action(detail=True, methods=['post'])
     def trigger_deploy(self, request, pk=None):
