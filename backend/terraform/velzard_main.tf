@@ -110,12 +110,18 @@ def generate_velzard_deployment():
     if not os.path.exists("velzion.yaml"): sys.exit(1)
     with open("velzion.yaml", 'r') as f: config = yaml.safe_load(f)
     
-    compose_file = config.get("compose_file")
+    byoc_mode = config.get("byoc_mode", False)
     routes = config.get("routes", {})
     
-    if compose_file:
+    if byoc_mode:
         # Enterprise Mode: Bring Your Own Compose
-        if not os.path.exists(compose_file): sys.exit(1)
+        if isinstance(byoc_mode, str):
+            compose_file = byoc_mode
+        else:
+            possible_files = ["docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml"]
+            compose_file = next((f for f in possible_files if os.path.exists(f)), None)
+        
+        if not compose_file or not os.path.exists(compose_file): sys.exit(1)
         with open(compose_file, 'r') as f: compose = yaml.safe_load(f)
         
         if "networks" not in compose: compose["networks"] = {}
@@ -180,14 +186,14 @@ def generate_velzard_deployment():
                 if db_env_injection: s_entry["environment"].append(db_env_injection)
                     
             compose["services"][s_name] = s_entry
-        
-    compose["services"]["gateway"] = {
-        "image": "nginx:alpine", 
-        "ports": ["80:80"], 
-        "volumes": ["./nginx.conf:/etc/nginx/conf.d/default.conf:ro"], 
-        "networks": ["velzion-network"], 
-        "depends_on": list(services.keys())
-    }
+    if not byoc_mode:
+        compose["services"]["gateway"] = {
+            "image": "nginx:alpine", 
+            "ports": ["80:80"], 
+            "volumes": ["./nginx.conf:/etc/nginx/conf.d/default.conf:ro"], 
+            "networks": ["velzion-network"], 
+            "depends_on": list(services.keys())
+        }
 
     compose["services"]["telemetry"] = {
         "image": "otel/opentelemetry-collector-contrib:latest",

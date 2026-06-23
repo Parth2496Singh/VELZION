@@ -82,6 +82,7 @@ export default function Production() {
   const [instanceType, setInstanceType] = useState('t3.small');
   const [volumeSize, setVolumeSize] = useState(30);
   const [hasDockerCompose, setHasDockerCompose] = useState(false);
+  const [yamlContent, setYamlContent] = useState('');
 
   // --- TELEMETRY & CINEMATIC STATE ---
   const [expandedRowId, setExpandedRowId] = useState(null);
@@ -91,13 +92,11 @@ export default function Production() {
   const { metrics } = useTelemetry();
 
   const yamlTemplate = hasDockerCompose ? `version: 2.0
-# 🚀 Enterprise Mode: Velzion will use your existing Docker Compose!
-compose_file: ./docker-compose.yml
-
-# Just tell Velzion which of your internal services should face the public internet.
-routes:
-  /: frontend              # Maps domain.com/ to your 'frontend' service
-  /api: delivery-service   # Maps domain.com/api to your 'delivery-service'
+# 🚀 Enterprise Mode (BYOC)
+# Velzion will automatically detect 'docker-compose.yml' in your repository root.
+# If your production file has a custom name or folder, replace 'true' with the path.
+# Example: byoc_mode: ./deploy/docker-compose.prod.yml
+byoc_mode: true
 ` : `version: 2.0
 
 # ====================================================================
@@ -198,12 +197,13 @@ routes:
         volume_size: parseInt(volumeSize, 10)
       });
       setCurrentDeploymentId(res.data.id);
+      setYamlContent(yamlTemplate);
       setStep(2);
     } catch (err) { console.error("Failed to initialize deployment", err); }
   };
 
   const handleCommitToGitHub = () => {
-    const encodedYaml = encodeURIComponent(yamlTemplate);
+    const encodedYaml = encodeURIComponent(yamlContent);
     const githubUrl = `https://github.com/${selectedRepo}/new/main?filename=velzion.yaml&value=${encodedYaml}`;
     window.open(githubUrl, '_blank');
     setStep(3);
@@ -516,9 +516,11 @@ routes:
               {step === 2 && (
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={springPage}>
                   <p style={{ color: 'var(--text-pure)', fontSize: '0.95rem', marginBottom: '1.25rem' }}>Blueprint generated for <b style={{color: 'var(--vz-gold-core)'}}>{selectedRepo}</b>.</p>
-                  <div style={{ background: '#000', padding: '1.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', fontSize: '0.8rem', whiteSpace: 'pre-wrap', marginBottom: '2.5rem', maxHeight: '300px', overflowY: 'auto' }}>
-                    {yamlTemplate}
-                  </div>
+                  <textarea 
+                    value={yamlContent} 
+                    onChange={(e) => setYamlContent(e.target.value)}
+                    style={{ width: '100%', minHeight: '300px', background: '#000', padding: '1.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', fontSize: '0.85rem', resize: 'vertical', marginBottom: '2.5rem' }} 
+                  />
                   <div style={{ display: 'flex', gap: '1rem' }}>
                     <button style={{ background: 'transparent', border: '1px solid var(--border-subtle)', color: 'var(--text-pure)', padding: '1rem', borderRadius: 'var(--radius-sm)', flex: 1, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => setStep(1)} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-layer-2)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>Go Back</button>
                     <button onClick={handleCommitToGitHub} style={{ flex: 2, justifyContent: 'center', background: 'rgba(251, 191, 36, 0.1)', color: 'var(--vz-gold-core)', border: '1px solid var(--vz-gold-border)', padding: '1rem', borderRadius: 'var(--radius-sm)', fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: 'inset 0 0 10px rgba(251, 191, 36, 0.1)' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--vz-gold-core)'; e.currentTarget.style.color = '#000'; e.currentTarget.style.boxShadow = '0 0 30px rgba(251, 191, 36, 0.6)'; e.currentTarget.style.transform = 'scale(0.99)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(251, 191, 36, 0.1)'; e.currentTarget.style.color = 'var(--vz-gold-core)'; e.currentTarget.style.boxShadow = 'inset 0 0 10px rgba(251, 191, 36, 0.1)'; e.currentTarget.style.transform = 'scale(1)'; }}>
